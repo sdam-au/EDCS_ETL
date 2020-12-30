@@ -1,0 +1,294 @@
+---
+title: "EDCS cleaning of the epigraphic text"
+author: "Petra Hermankova"
+date: "10/12/2020"
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_float: true
+    number_sections: true
+    toc_depth: 2
+    df_print: paged
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+require("knitr")
+opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
+
+library(tidyverse)
+library(jsonlite)
+library(data.table)
+library(leaflet)
+library(sdam)
+```
+
+## Loading data
+Load the dataset, if you have Sciencedata.dk credentials
+
+```{r, echo=FALSE}
+mycred_secret<- readLines("~/mysecret.txt")
+```
+
+```{r, loading data}
+resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET", cred=mycred_secret)
+```
+
+```{r, echo=FALSE}
+remove(mycred_secret)
+```
+
+OR of you don't have Sciencedata credentials: 
+```{r, loading data public, eval=FALSE} 
+#The folder still needs to made public by owner (Vojtech Kase)
+resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET")
+```
+
+Make a list and tibble from the downloaded dataset
+```{r}
+list_json <- jsonlite::fromJSON(resp)
+EDCS = as_tibble(list_json)
+```
+
+# Dataset exploration
+
+```{r}
+names(EDCS)
+```
+
+```{r}
+head(EDCS)
+```
+
+
+## How many inscriptions there are in total?
+```{r}
+nrow(EDCS)
+```
+
+
+## Language
+
+### How many and which combinations of languages contain inscription in Greek?
+```{r}
+grep(x = EDCS$language, "GR", value = TRUE) %>% 
+  table()
+```
+
+### How many inscriptions have GR as one of their languages?
+```{r}
+grep(x = EDCS$language, "GR", value = TRUE) %>% 
+  length()
+```
+
+
+## Province
+```{r}
+EDCS %>% 
+  count(province, sort = TRUE)
+```
+Some inscriptions have double provinces:
+
+Belgica | Germania inferior
+Pannonia inferior | Pannonia superior
+Moesia inferior | Moesia superior
+
+```{r}
+str_split_fixed(EDCS$province, pattern = " \\| ", n=2) %>% as.data.frame() -> provinces
+
+provinces %>% 
+  cbind(combined = c(provinces$V1, provinces$V2)) %>% 
+  filter(combined != "") -> provinces
+
+provinces %>% 
+  count(combined, sort=TRUE)
+```
+
+
+# How many inscriptions are linked to EDH
+
+```{r}
+length(str_subset(EDCS$Links, "heidelberg"))
+```
+
+# How many inscriptions are linked to PHI
+
+```{r}
+length(str_subset(EDCS$Links, "epigraphy.packhum"))
+```
+
+# Status attribute
+```{r}
+unique(str_count(EDCS$status, pattern = ";"))
+```
+
+```{r}
+str_split_fixed(EDCS$status, ";", n=13) %>% 
+  as.data.frame() -> EDCS_status
+EDCS_status
+
+EDCS_status %>% 
+  cbind(combined = c(EDCS_status$V1,EDCS_status$V2,EDCS_status$V3,EDCS_status$V4,EDCS_status$V5,EDCS_status$V6,EDCS_status$V7,EDCS_status$V8,EDCS_status$V9,EDCS_status$V10,EDCS_status$V11,EDCS_status$V12, EDCS_status$V13)) %>% 
+  filter(combined != "") %>% 
+  mutate(combined_clean = str_replace_all(string = combined, pattern = "\\?", replacement = "")) %>% 
+  mutate(combined_clean = str_replace_all(string = combined_clean, pattern = "^ | $", replacement = "")) %>% 
+  count(combined_clean, sort=TRUE)
+```
+
+## Attribute 'Status' split into Inscription type, Inscribing Process and Status notation
+
+```{r}
+inscription_type <- c("tituli sepulcrales", "tituli fabricationis", "inscriptiones christianae", "tituli sacri", "tituli possessionis", "tituli operum", "miliaria", "tituli honorarii", "carmina", "signacula", "diplomata militaria", "leges", "defixiones", "termini", "reges", "signacula medicorum", "senatus consulta")
+
+inscribing_process <- c("sigilla impressa", "litterae erasae", "litterae in litura", "tesserae nummulariae")
+
+status_notation<- c("viri", "tria nomina", "mulieres", "nomen singulare", "liberti/libertae", "milites", "Augusti/Augustae", "ordo senatorius", "servi/servae", "officium/professio", "ordo decurionum", "sacerdotes pagani", "praenomen et nomen", "ordo equester", "seviri Augustales", "sacerdotes christiani")
+```
+
+```{r}
+EDCS$inscription_type <- ifelse(grepl(inscription_type, EDCS$status, ignore.case = T), inscription_type, NA)
+EDCS$inscribing_process <- ifelse(grepl(inscribing_process, EDCS$status, ignore.case = T), inscribing_process, NA)
+EDCS$status_notation <- ifelse(grepl(status_notation, EDCS$status, ignore.case = T), status_notation, NA)
+```
+
+##################### This still needs to be fixed as the categories are recroded only once 
+
+### Type of inscription
+```{r}
+EDCS %>% 
+  count(inscription_type)
+```
+
+### Type of inscribing process
+```{r}
+EDCS %>% 
+    count(inscribing_process) 
+```
+
+
+### Type of status notation
+```{r}
+EDCS %>% 
+  count(status_notation) 
+```
+
+
+## Coordinates
+
+### Which inscriptions have geospatial coordinates?
+```{r}
+EDCS %>% 
+  dplyr::filter(!is.na(Latitude)) -> location
+# how many inscriptions have latitude
+nrow(location)
+# how many % of inscriptions have latitude
+nrow(location)/(nrow(EDCS)/100)
+```
+
+```{r}
+location$Latitude <- as.numeric(location$Latitude)
+location$Longitude <- as.numeric(location$Longitude)
+```
+
+```{r}
+location$ID <- location$`EDCS-ID`
+head(location)
+```
+
+
+
+### Mapped inscriptions with known coordinates - for full dataset be careful before running
+```{r}
+map_all <- leaflet(width="100%") %>%
+ addProviderTiles("Stamen.TerrainBackground")%>% # Add CartoDB map tiles
+# addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
+# addProviderTiles("Esri.WorldImagery", group = "ESRI Aerial") %>%
+# addPolylines(data = roads, color = "purple", weight = 2, opacity = 0.7) %>% 
+  setView( lng = 22.326743, lat = 46.897122, zoom = 4 ) %>%
+  #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>% 
+#  addCircles(lng = location$Longitude, lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>% 
+  addCircles(lng = location$Longitude,  
+             lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
+             popup = paste0("<b> InscriptionID: </b>", location$ID 
+                             # "<br><b> Province: </b>", location$province,
+                             #<br><b> Type of inscription: </b>", lat_long_milestone$type_of_inscription_clean,
+                             # "<br><b> Type of monument: </b>", lat_long_milestone$type_of_monument_clean,
+                             # "<br><b> Not before (date): </b>", lat_long_milestone$not_before,
+                             # "<br><b> Not after (date): </b>", lat_long_milestone$not_after,
+                             #   "<br><b> Commentary: </b>", lat_long_milestone$commentary,
+                            )
+             ) %>% 
+addLegend(position = "topright",
+  colors = c("Purple"),
+  labels = c("Inscription (n = 383,322)"), opacity = 1,
+  title = "Inscriptions in the EDCS database"
+)
+map_all
+```
+
+
+
+# Dates
+
+## Start year
+```{r}
+EDCS %>% 
+  filter(!is.na(EDCS$`dating from`)) -> has_start_yr
+# how many inscriptions have start year
+nrow(has_start_yr)
+# how many inscriptions have start year in %
+nrow(has_start_yr)/(nrow(EDCS)/100)
+```
+
+## End year
+```{r}
+EDCS %>% 
+  filter(!is.na(EDCS$`dating to`)) -> has_end_yr
+# how many inscriptions have end year
+nrow(has_end_yr)
+# how many inscriptions have end year in %
+nrow(has_end_yr)/(nrow(EDCS)/100)
+```
+
+# Material
+
+```{r}
+EDCS %>% 
+  count(Material, sort= TRUE)
+```
+
+# Comments
+
+```{r}
+unique(EDCS$Comment)
+```
+
+# Text of inscription
+
+## How many inscriptions contain a text of an isncription
+
+```{r}
+length(na.omit(EDCS$clean_text_interpretive_word))
+```
+In percent: 
+```{r}
+length(na.omit(EDCS$clean_text_interpretive_word))/(nrow(EDCS)/100)
+```
+
+## How many words there are:
+
+Original text before cleaning:
+```{r}
+sum(lengths(gregexpr("\\w+", EDCS$inscription)) + 1) 
+
+#different counting method
+sum(na.omit(str_count(EDCS$inscription, '\\w+')))
+```
+
+Text after cleaning:
+```{r}
+sum(lengths(gregexpr("\\w+", EDCS$clean_text_interpretive_word)) + 1) 
+
+#different counting method
+sum(na.omit(str_count(EDCS$clean_text_interpretive_word, '\\w+')))
+```
