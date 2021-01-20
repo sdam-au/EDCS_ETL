@@ -14,7 +14,7 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
+opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(jsonlite)
@@ -31,7 +31,7 @@ mycred_secret<- readLines("~/mysecret.txt")
 ```
 
 ```{r, loading data}
-resp = request("EDCS_merged_2020-12-09.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET", cred=mycred_secret)
+resp = request("EDCS_merged_2020-12-09.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
 ```
 
 ```{r, echo=FALSE}
@@ -39,9 +39,9 @@ remove(mycred_secret)
 ```
 
 OR of you don't have Sciencedata credentials: 
-```{r, loading data public, eval=FALSE} 
+```{r, loading data public, eval=FALSE}
 #The folder still needs to made public by owner (Vojtech Kase)
-resp = request("EDCS_merged_2020-12-09.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET")
+#resp = request("EDCS_merged_2020-12-09.json", #path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET")
 ```
 
 Make a list and tibble from the downloaded dataset
@@ -555,7 +555,7 @@ edcs_number_six_both <- c("\\[6\\]", "[-]")
 ```
 
 
-### 4.5 Blank space represented by number 1 
+### 4.5 Blank space represented by number 1
 
 **Aim:** All instances of number one will substituted with " ".
 
@@ -564,9 +564,9 @@ edcs_number_six_both <- c("\\[6\\]", "[-]")
 
 ```{r}
 edcs_number_one <- c("[1]", " ")
-``` 
+```
 
-### 4.6 Quotes 
+### 4.6 Quotes
 
 **Aim:** All instances of quotes one will substituted with " ".
 
@@ -577,7 +577,7 @@ edcs_number_one <- c("[1]", " ")
 edcs_quotes <- c("\u{0022}", " ")
 ```
 
-### 4.7 Backslashes 
+### 4.7 Backslashes
 
 **Aim:** All instances of backslashes one will substituted with "".
 
@@ -585,13 +585,37 @@ edcs_quotes <- c("\u{0022}", " ")
 * Example after cleaning: ```Eros Cai Epidi  sum```
 
 
+
 ```{r}
 edcs_backslashes <- c("\u{005C}\u{005C}", " ")
 ```
 
 
-## EDCS specific cleaning
+### 4.8 Latin Enclitics
 
+**Aim:** All instances of Latin eclitics -que will be separated from the word by space.
+
+* Example before cleaning: ```libertatisque```
+* Example after cleaning: ```libertatis```
+
+```{r}
+edcs_que <- c("(\\w+)(que)", "\\1 \\2")
+```
+
+### 4.9 Roman numerals + vir
+
+**Aim:** All instances of Roman numerals preceeding word 'vir' will be separated from the word by space.
+
+* Example before cleaning: ```IIIIviribus```
+* Example after cleaning: ```IIII viribus```
+
+```{r}
+edcs_vir <- c("([I|V|X])(vir*)", "\\1 \\2")
+```
+
+
+
+## EDCS specific cleaning
 
 ### Removing redundant onformation from `inscription`
 
@@ -610,45 +634,45 @@ edcs_backslashes <- c("\u{005C}\u{005C}", " ")
 
 3) Attribute `inscription` contains modern notes that are not part of the ancient inscription and need to be cleaned out.
 
-*Example of strings to be removed* 
+*Example of strings to be removed*
 
 `According the proposed supplements of the inscription the date is 162 or 163 like EDCS-28500161 from the year 162/3 or EDCS-29100030 from the year 162.`
 
 
 
 ```{r}
-EDCS_clean <- EDCS %>% 
-   mutate(dating_notes = str_extract(EDCS$inscription, "^[to|b:].*\\n\\n")) %>% 
+EDCS_clean <- EDCS %>%
+   mutate(dating_notes = str_extract(EDCS$inscription, "^[to|b:].*\\n\\n")) %>%
    mutate(inscription_stripped = str_replace(EDCS$inscription, "^[to|b:].*\\n\\n([^.*])", "\\1")) %>%
-   mutate(dating_notes2 = str_extract(EDCS_clean$inscription_stripped, "^to\\s{1,2}\\d{1,4}.*")) %>% 
+   mutate(dating_notes2 = str_extract(EDCS_clean$inscription_stripped, "^to\\s{1,2}\\d{1,4}.*")) %>%
    mutate(inscription_stripped2 = str_replace(EDCS_clean$inscription_stripped, "^to\\s{1,2}\\d{1,4}.*", "")) %>%
-   mutate(other_notes = str_extract(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$")) %>% 
-   mutate(inscription_stripped3 = str_replace(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$",""))  %>% 
-   mutate(other_notes2 = str_extract(EDCS_clean$inscription_stripped3, "\\s*http.*")) %>% 
-   mutate(inscription_stripped4 = str_replace(EDCS_clean$inscription_stripped3, "\\s*http.*","")) %>% 
-   mutate(other_notes3 = str_extract(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*")) %>% 
-   mutate(inscription_stripped5 = str_replace(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*","")) %>% 
+   mutate(other_notes = str_extract(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$")) %>%
+   mutate(inscription_stripped3 = str_replace(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$",""))  %>%
+   mutate(other_notes2 = str_extract(EDCS_clean$inscription_stripped3, "\\s*http.*")) %>%
+   mutate(inscription_stripped4 = str_replace(EDCS_clean$inscription_stripped3, "\\s*http.*","")) %>%
+   mutate(other_notes3 = str_extract(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*")) %>%
+   mutate(inscription_stripped5 = str_replace(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*","")) %>%
    mutate(other_notes4 = str_extract(EDCS_clean$inscription_stripped5, "\\n\\n(?!lauce|la s\\(olvit\\)).*")) %>%
    mutate(inscription_stripped6 = str_replace(EDCS_clean$inscription_stripped5, "\\n\\n(?!lauce|la s\\(olvit\\)).*","")) %>%
-   mutate(other_notes5 = str_extract(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]")) %>% 
-   mutate(inscription_stripped7 = str_replace(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]","")) %>% 
-   mutate(inscription_stripped8 = str_replace(EDCS_clean$inscription_stripped7, "^ \\n \\n","")) %>% 
-   mutate(inscription_stripped9 = str_replace(EDCS_clean$inscription_stripped8, "\\n$","")) %>% 
-   mutate(inscription_stripped10 = str_replace(EDCS_clean$inscription_stripped9, "^ \\n\\n","")) %>% 
+   mutate(other_notes5 = str_extract(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]")) %>%
+   mutate(inscription_stripped7 = str_replace(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]","")) %>%
+   mutate(inscription_stripped8 = str_replace(EDCS_clean$inscription_stripped7, "^ \\n \\n","")) %>%
+   mutate(inscription_stripped9 = str_replace(EDCS_clean$inscription_stripped8, "\\n$","")) %>%
+   mutate(inscription_stripped10 = str_replace(EDCS_clean$inscription_stripped9, "^ \\n\\n","")) %>%
    mutate(other_notes6 = str_extract(EDCS_clean$inscription_stripped10, "\\n.*")) %>%
    mutate(inscription_stripped11 = str_replace_all(EDCS_clean$inscription_stripped10, "\\n.*","")) %>%
    mutate(other_notes7 = str_extract(EDCS_clean$inscription_stripped11, "\\bThe .*")) %>%
-   mutate(inscription_stripped12 = str_replace(EDCS_clean$inscription_stripped11, "\\bThe .*","")) %>% 
+   mutate(inscription_stripped12 = str_replace(EDCS_clean$inscription_stripped11, "\\bThe .*","")) %>%
    mutate(other_notes8 = str_extract(EDCS_clean$inscription_stripped12, ".* the .*")) %>%
-   mutate(inscription_stripped13 = str_replace(EDCS_clean$inscription_stripped12, ".* the .*","")) %>% 
-   mutate(inscription_stripped14 = str_replace(EDCS_clean$inscription_stripped13, "\\r+","")) 
+   mutate(inscription_stripped13 = str_replace(EDCS_clean$inscription_stripped12, ".* the .*","")) %>%
+   mutate(inscription_stripped14 = str_replace(EDCS_clean$inscription_stripped13, "\\r+",""))
 ```
 
 ## Building cleaning functions for specific datasets
 
 When we have established the individual building blocks, we can put them together in the right sequence and build a cleaning function in R for conservative and interpretive models.
 
-### Interpretive model for 'tidytext' analysis based on the analysis of words
+### Interpretive model for text mining analysis based on the analysis of words
 *Aim:* to have a clean text enriched by editorial interpretations and reconstructions of the text (to have as rich text of an inscription as possible).
 
 The output of the function will consist of words separated by one space, so the data is ready for tidytext analysis. No interpunction will be left in the text.
@@ -675,6 +699,8 @@ cleaning_interpretive_edcs <- function(epigraphic_dataset){
   clean_text <- gsub(pattern=uncertainty_symbols[1], replacement=uncertainty_symbols[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=arabic_numerals[1], replacement=arabic_numerals[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=unclosed_brackets[1], replacement=unclosed_brackets[2], x=clean_text, perl=TRUE)
+  clean_text <- gsub(pattern=edcs_que[1], replacement=edcs_que[2], x=clean_text, perl=TRUE)
+  clean_text <- gsub(pattern=edcs_vir[1], replacement=edcs_vir[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=extra_blank[1], replacement=extra_blank[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=multi_whitespace[1], replacement=multi_whitespace[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=whitespace_endline[1], replacement=whitespace_endline[2], x=clean_text, perl=TRUE)
@@ -685,27 +711,26 @@ cleaning_interpretive_edcs <- function(epigraphic_dataset){
 
 ### Enriching the full dataset with conservative and interpretive cleaned versions of the text:
 ```{r}
-EDCS_clean <- EDCS_clean %>% 
+EDCS_clean <- EDCS_clean %>%
    mutate(clean_text_interpretive_word = cleaning_interpretive_edcs(EDCS_clean$inscription_stripped14))
 ```
 
 
 ### Combining notes extracted from the text of the inscription by category:
 ```{r}
-
-EDCS_clean <- EDCS_clean %>% 
-  mutate(notes_dating = paste(EDCS_clean$dating_notes, EDCS_clean$dating_notes2))%>% 
-  mutate(notes_dating = str_replace_all(notes_dating, "NA", "")) %>% 
-  mutate(notes_references = paste(EDCS_clean$other_notes, EDCS_clean$other_notes2))%>% 
-  mutate(notes_references = str_replace_all(notes_references, "NA", "")) %>% 
-  mutate(notes_comments = paste(EDCS_clean$other_notes3, EDCS_clean$other_notes4, EDCS_clean$other_notes5, EDCS_clean$other_notes6, EDCS_clean$other_notes7, EDCS_clean$other_notes8)) %>% 
+EDCS_clean <- EDCS_clean %>%
+  mutate(notes_dating = paste(EDCS_clean$dating_notes, EDCS_clean$dating_notes2))%>%
+  mutate(notes_dating = str_replace_all(notes_dating, "NA", "")) %>%
+  mutate(notes_references = paste(EDCS_clean$other_notes, EDCS_clean$other_notes2))%>%
+  mutate(notes_references = str_replace_all(notes_references, "NA", "")) %>%
+  mutate(notes_comments = paste(EDCS_clean$other_notes3, EDCS_clean$other_notes4, EDCS_clean$other_notes5, EDCS_clean$other_notes6, EDCS_clean$other_notes7, EDCS_clean$other_notes8)) %>%
   mutate(notes_comments = str_replace_all(notes_comments, "NA", ""))
 ```
 
 
 ### Selecting the columns relevant for further analysis (for export)
 ```{r}
-EDCS_export <- EDCS_clean %>% 
+EDCS_export <- EDCS_clean %>%
   select(`EDCS-ID`, publication, province, place, Links, language, `dating from`, `dating to`, status, Latitude, Longitude, photo, Material, Comment, notes_dating, notes_references, notes_comments, inscription, inscription_stripped14, clean_text_interpretive_word)
 ```
 
@@ -715,8 +740,8 @@ EDCS_export <- EDCS_clean %>%
 ```{r}
 EDCS_cleaned_json <- jsonlite::toJSON(EDCS_export, auto_unbox = TRUE)
 mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_cleaned_json, file="output/EDCS_text_cleaned_2020-12-29.json")
-request("output/EDCS_text_cleaned_2020-12-29.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/",
+write(EDCS_cleaned_json, file="output/EDCS_text_cleaned_2021-01-20.json")
+request("output/EDCS_text_cleaned_2021-01-20.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 
@@ -725,8 +750,3 @@ request("output/EDCS_text_cleaned_2020-12-29.json", path="/sharingout/648597@au.
 file.remove("./EDCS_text_cleaned_2020-10-09.json")
 remove(mycred_secret)
 ```
-
-
-
-
-
