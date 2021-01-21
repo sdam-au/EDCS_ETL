@@ -14,7 +14,7 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
+opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(jsonlite)
@@ -31,22 +31,22 @@ mycred_secret<- readLines("~/mysecret.txt")
 ```
 
 ```{r, loading data}
-resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET", cred=mycred_secret)
+resp = request("EDCS_text_cleaned_2021-01-21.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
 ```
 
 ```{r, echo=FALSE}
 remove(mycred_secret)
 ```
 
-OR of you don't have Sciencedata credentials: 
-```{r, loading data public, eval=FALSE} 
+OR of you don't have Sciencedata credentials:
+```{r, loading data public, eval=FALSE}
 #The folder still needs to made public by owner (Vojtech Kase)
-resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET")
+resp = request("EDCS_text_cleaned_2021-01-21.json", path="/shared/1f5f56d09903fe259c0906add8b3a55e", method="GET")
 ```
 
 Make a list and tibble from the downloaded dataset
 ```{r}
-list_json <- jsonlite::fromJSON("output/EDCS_text_cleaned_2020-12-29.json")
+list_json <- jsonlite::fromJSON(resp)
 EDCS = as_tibble(list_json)
 ```
 
@@ -55,16 +55,23 @@ source: https://cran.r-project.org/web/packages/udpipe/vignettes/udpipe-annotati
 
 ## Download model for given language
 ```{r}
-library(udpipe)
 #dl <- udpipe_download_model(language = "ancient_greek")
-dl <- udpipe_download_model(language = "latin")
-str(dl)
+
+
+dl <- udpipe_download_model(udpipe_model_repo = "jwijffels/udpipe.models.ud.2.5" , language = "latin-proiel", model_dir = "../data/") # latin-proiel model
+
+dl2 <- udpipe_download_model(udpipe_model_repo = "jwijffels/udpipe.models.ud.2.5", language = "latin-perseus", model_dir = "../data/") # latin-perseus model
+
 ```
 
 ## Give the full path to the model and load it to R
 ```{r}
 # udmodel_anc_greek <- udpipe_load_model(file = "ancient_greek-perseus-ud-2.4-190531.udpipe")
-udmodel_latin <- udpipe_load_model(file = "latin-perseus-ud-2.4-190531.udpipe")
+
+udmodel_latin <- udpipe_load_model(file = "../data/latin-perseus-ud-2.5-191206.udpipe")
+
+udmodel_latin <- udpipe_load_model(file = "../data/latin-proiel-ud-2.5-191206.udpipe")
+
 ```
 
 ## Anotate the text using UDpipe
@@ -79,55 +86,55 @@ table(udpipe_text$upos)
 ```
 
 ```{r}
-nouns <- udpipe_text %>% 
-  filter(udpipe_text$upos == "NOUN") 
+nouns <- udpipe_text %>%
+  filter(udpipe_text$upos == "NOUN")
 ```
 
 ```{r}
-verbs <- udpipe_text %>% 
-  filter(udpipe_text$upos == "VERB") 
+verbs <- udpipe_text %>%
+  filter(udpipe_text$upos == "VERB")
 ```
 
 ```{r}
-punctuation <- udpipe_text %>% 
-  filter(udpipe_text$upos == "PUNCT") 
+punctuation <- udpipe_text %>%
+  filter(udpipe_text$upos == "PUNCT")
 ```
 
 ```{r}
-problematic <- udpipe_text %>% 
-  filter(udpipe_text$upos == "X") 
+problematic <- udpipe_text %>%
+  filter(udpipe_text$upos == "X")
 ```
 
 ## The most frequent of all word lemmata
 ```{r}
-udpipe_text %>% 
+udpipe_text %>%
   count(lemma, sort = TRUE) %>%
-  filter(n > 1000) %>% 
+  filter(n > 1000) %>%
   mutate(lemma = reorder(lemma, n)) %>%
   print()
 ```
 
 ## The most frequent of nouns lemmata
 ```{r}
-nouns %>% 
+nouns %>%
   count(lemma, sort = TRUE) %>%
-  filter(n > 1000) %>% 
+  filter(n > 1000) %>%
   mutate(lemma = reorder(lemma, n)) %>%
   print()
 ```
 
 ```{r}
-verbs %>% 
+verbs %>%
   count(lemma, sort = TRUE) %>%
-  filter(n > 1000) %>% 
+  filter(n > 1000) %>%
   mutate(lemma = reorder(lemma, n)) %>%
   print()
 ```
 
 ```{r}
-punctuation %>% 
+punctuation %>%
   count(lemma, sort = TRUE) %>%
-  filter(n > 10) %>% 
+  filter(n > 10) %>%
   mutate(lemma = reorder(lemma, n)) %>%
   print()
 ```
@@ -139,133 +146,31 @@ punctuation %>%
 
 
 tail(udpipe_text)
-udpipe_text <- udpipe_text %>% 
+udpipe_text <- udpipe_text %>%
   mutate(insc_id = (as.numeric(str_replace(doc_id, pattern = "doc", replacement = ""))))
 EDCS$doc_id <- 1:nrow(EDCS)
 
 full_appended <- left_join(EDCS, udpipe_text, by = c("doc_id" = "insc_id"))
+```
+```{r}
 head(full_appended)
 ```
 
 
 ```{r}
-save(full_appended, file="output/EDCS_lemmatized_2020-12-29.Rdata")
+save(full_appended, file="output/EDCS_lemmatized_2021-01-21.Rdata")
 ```
 
 # Save to Sciencedata
 ```{r}
 EDCS_lemmatized_json <- jsonlite::toJSON(full_appended, auto_unbox = TRUE)
 mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_lemmatized_json, file="output/EDCS_text_lemmatized_udpipe_2020-12-29.json")
-request("output/EDCS_text_lemmatized_udpipe_2020-12-29.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/",
+write(EDCS_lemmatized_json, file="output/EDCS_text_lemmatized_udpipe_2021-01-21.json")
+request("output/EDCS_text_lemmatized_udpipe_2021-01-21.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 
 
-# Search for Road-related inscription
-
-## Defining road related vocabulary
-```{r}
-road_vocabulary1 <- c("via", "pons", "mutatio", "mansio", "caput viae", "miliarium", "millia passuum", "passus", "carpentum", "porta", "vicus", "clivus", "semita", "angiportus", "scala", "gradus", "gressus", "incessus", "leuga", "tabellarium", "tabelarium", "itinerarium", "annona", "actus", "cursus publicus", "vehiculatio", "vehiculum", "iter", "iumentum", "Via publica", "Via privata", "Via vicinalis", "Via terrena", "viam munire", "viam fecit", "viam refecit", "viam restituit", "curator viarum", "compitum", "deverticulum", "diverticulum", "civitas", "viator", "arcus", "statio", "terminus", "lares viales", "lares compitales", "Redicolus", "Ianus")
-road_vocabulary2 <- c("παροδεῖτα")
-```
-
-## Searching for predefined vocabulary in lemmata
-```{r}
-full_appended %>%
-  count(lemma, sort = TRUE) %>%
-  filter(lemma %in% road_vocabulary1) %>% 
-  print()
-```
-
-```{r}
-full_appended %>%
-  filter(token == "viator") %>%
-  count()
-```
-
-```{r}
-full_appended %>%
-  filter(lemma == "viator") %>%
-  count()
-```
-
-```{r}
-length(unique(str_subset(full_appended$clean_text_interpretive_word, "viator"))) 
-```
-
-```{r}
-full_appended %>% 
-  filter(full_appended$inscription == str_subset(full_appended$inscription, "viator viator quod tu"))
-```
-
-
-
-### Separating the subdataset containing the predefined vocabulary
-```{r}
-road_text <- full_appended %>%
-  filter(lemma %in% road_vocabulary1) %>% 
-  print()
-```
-
-### From what province some road related inscriptions
-```{r}
-road_text %>% 
-  count(province, sort=TRUE)
-```
-
-### What are the most common words (lemma and token)
-```{r}
-road_text %>% 
-  count(lemma, token, sort=TRUE)
-```
-
-### How many unique inscriptions there are
-```{r}
-length(unique(road_text$doc_id))
-```
-
-### Select only the text of inscriptions once
-```{r}
-road_unique<- road_text %>% distinct(doc_id, .keep_all = TRUE)
-```
-
-
-```{r}
-library(leaflet)
-
-road_unique$Longitude <- as.numeric(road_unique$Longitude)
-road_unique$Latitude <- as.numeric (road_unique$Latitude)
-
-map_road_insc <-leaflet(width="100%") %>%
-  addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
-  addCircles(lng = road_unique$Longitude, 
-             lat = road_unique$Latitude, radius = 10, fill = TRUE, color= , fillColor = road_unique$province,
-             popup = paste0("<b> InscriptionID: </b>", road_unique$`EDCS-ID` , 
-                            "<br><b> Ancient findspot: </b>", road_unique$place,
-                             "<br><b> Type of inscription: </b>", road_unique$status,
-                              "<br><b> Material: </b>", road_unique$Material,
-                              "<br><b> Not before (date): </b>", road_unique$`dating from`,
-                              "<br><b> Not after (date): </b>", road_unique$`dating to`,
-                                "<br><b> Text: </b>", road_unique$clean_text_interpretive_word),
-) %>% 
-addLegend(position = "topright",
-  colors = c("Blue"),
-  labels = c("Inscriptions"), opacity = 1,
-  title = "Position of all road realted inscriptions in EDCS" 
-)
-map_road_insc
-
-
-```
-# Saving to Sciencedata
-```{r}
-EDCS_cleaned_json <- jsonlite::toJSON(full_appended, auto_unbox = TRUE)
-mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_cleaned_json, file="output/EDCS_text_lemmatized_udpipe_2020-12-22.json")
-request("output/EDCS_text_lemmatized_udpipe_2020-12-22.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/",
-        method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
-```
 
 # Remove local copy of the json and the credential before submitting to GitHub
 ```{r}
