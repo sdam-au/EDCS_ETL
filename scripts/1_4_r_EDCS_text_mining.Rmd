@@ -157,16 +157,81 @@ head(full_appended)
 ```
 
 
-```{r}
-save(full_appended, file="output/EDCS_lemmatized_2021-01-21.Rdata")
+
+# Save R data locally (as a backup)
+```{r, Perseus}
+save(full_appended, file="../output_data/EDCS_lemmatized_perseus_2021-10-21.Rdata")
+```
+
+```{r, Proiel}
+save(full_appended, file="../output_data/EDCS_lemmatized_proiel_2021-10-21.Rdata")
+```
+
+# Save JSON locally
+```{r, Perseus model}
+EDCS_udpipe_perseus1 <- full_appended[1:100000,]
+EDCS_udpipe_perseus2 <- full_appended[100001:200000,]
+EDCS_udpipe_perseus3 <- full_appended[200001:300000,]
+EDCS_udpipe_perseus4 <- full_appended[300001:400000,]
+EDCS_udpipe_perseus5 <- full_appended[400001:500618,]
+
+EDCS_json_perseus1 <- jsonlite::toJSON(EDCS_udpipe_perseus1, auto_unbox = TRUE)
+EDCS_json_perseus2 <- jsonlite::toJSON(EDCS_udpipe_perseus2, auto_unbox = TRUE)
+EDCS_json_perseus3 <- jsonlite::toJSON(EDCS_udpipe_perseus3, auto_unbox = TRUE)
+EDCS_json_perseus4 <- jsonlite::toJSON(EDCS_udpipe_perseus4, auto_unbox = TRUE)
+EDCS_json_perseus5 <- jsonlite::toJSON(EDCS_udpipe_perseus5, auto_unbox = TRUE)
+
+dir.create("../output_data/perseus")
+
+write(EDCS_json_perseus1, file="../output_data/perseus/EDCS_text_lemmatized_perseus_1_2021-01-22.json")
+write(EDCS_json_perseus2, file="../output_data/perseus/EDCS_text_lemmatized_perseus_2_2021-01-22.json")
+write(EDCS_json_perseus3, file="../output_data/perseus/EDCS_text_lemmatized_perseus_3_2021-01-22.json")
+write(EDCS_json_perseus4, file="../output_data/perseus/EDCS_text_lemmatized_perseus_4_2021-01-22.json")
+write(EDCS_json_perseus5, file="../output_data/perseus/EDCS_text_lemmatized_perseus_5_2021-01-22.json")
+
+```
+
+```{r, Proiel model}
+EDCS_udpipe_proiel1 <- full_appended[1:100000,]
+EDCS_udpipe_proiel2 <- full_appended[100001:200000,]
+EDCS_udpipe_proiel3 <- full_appended[200001:300000,]
+EDCS_udpipe_proiel4 <- full_appended[300001:400000,]
+EDCS_udpipe_proiel5 <- full_appended[400001:500618,]
+
+EDCS_json_proiel1 <- jsonlite::toJSON(EDCS_udpipe_proiel1, auto_unbox = TRUE)
+EDCS_json_proiel2 <- jsonlite::toJSON(EDCS_udpipe_proiel2, auto_unbox = TRUE)
+EDCS_json_proiel3 <- jsonlite::toJSON(EDCS_udpipe_proiel3, auto_unbox = TRUE)
+EDCS_json_proiel4 <- jsonlite::toJSON(EDCS_udpipe_proiel4, auto_unbox = TRUE)
+EDCS_json_proiel5 <- jsonlite::toJSON(EDCS_udpipe_proiel5, auto_unbox = TRUE)
+
+dir.create("../output_data/proiel")
+
+write(EDCS_json_proiel1, file="../output_data/proiel/EDCS_text_lemmatized_proiel_1_2021-01-22.json")
+write(EDCS_json_proiel2, file="../output_data/proiel/EDCS_text_lemmatized_proiel_2_2021-01-22.json")
+write(EDCS_json_proiel3, file="../output_data/proiel/EDCS_text_lemmatized_proiel_3_2021-01-22.json")
+write(EDCS_json_proiel4, file="../output_data/proiel/EDCS_text_lemmatized_proiel_4_2021-01-22.json")
+write(EDCS_json_proiel5, file="../output_data/proiel/EDCS_text_lemmatized_proiel_5_2021-01-22.json")
+
 ```
 
 # Save to Sciencedata
-```{r}
-EDCS_lemmatized_json <- jsonlite::toJSON(full_appended, auto_unbox = TRUE)
-mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_lemmatized_json, file="output/EDCS_text_lemmatized_udpipe_2021-01-21.json")
-request("output/EDCS_text_lemmatized_udpipe_2021-01-21.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/",
+```{r, Perseus}
+library(geojsonR)
+
+merge_files("../output_data/perseus/", "../output_data/EDCS_text_lemmatized_perseus_2021-01-22.json")
+
+mycred_secret<- readLines("../data/mysecret.txt")
+request("../output_data/EDCS_text_lemmatized_perseus_2021-01-22.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+        method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
+```
+
+```{r, Proiel}
+library(geojsonR)
+
+merge_files("../output_data/proiel/", "../output_data/EDCS_text_lemmatized_proiel_2021-01-22.json")
+
+mycred_secret<- readLines("../data/mysecret.txt")
+request("../output_data/EDCS_text_lemmatized_proiel_2021-01-22.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 
