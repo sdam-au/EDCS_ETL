@@ -45,6 +45,19 @@ OR of you don't have Sciencedata credentials:
 
 Make a list and tibble from the downloaded dataset
 ```{r}
-list_json <- jsonlite::fromJSON(resp)
+list_json <- jsonlite::fromJSON("output/EDCS_text_lemmatized_perseus_2021-01-22.json")
 EDCS_proiel = as_tibble(list_json)
 ```
+```{r}
+EDCS <- list_json <- jsonlite::fromJSON("output/EDCS_text_cleaned_2021-01-20.json")
+
+
+greek<- EDCS %>% filter(language == grep(x = EDCS$language, "GR", value = TRUE))
+```
+
+
+```{r}
+greek %>% 
+  count(province, sort=T)
+```
+

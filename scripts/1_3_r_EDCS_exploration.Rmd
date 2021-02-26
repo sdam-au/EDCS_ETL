@@ -31,17 +31,17 @@ mycred_secret<- readLines("~/mysecret.txt")
 ```
 
 ```{r, loading data}
-resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET", cred=mycred_secret)
+resp = request("EDCS_text_cleaned_2021-01-20.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
 ```
 
 ```{r, echo=FALSE}
 remove(mycred_secret)
 ```
 
-OR of you don't have Sciencedata credentials: 
-```{r, loading data public, eval=FALSE} 
+OR of you don't have Sciencedata credentials:
+```{r, loading data public, eval=FALSE}
 #The folder still needs to made public by owner (Vojtech Kase)
-resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS", method="GET")
+resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET")
 ```
 
 Make a list and tibble from the downloaded dataset
@@ -71,20 +71,28 @@ nrow(EDCS)
 
 ### How many and which combinations of languages contain inscription in Greek?
 ```{r}
-grep(x = EDCS$language, "GR", value = TRUE) %>% 
+grep(x = EDCS$language, "GR", value = TRUE) %>%
   table()
 ```
 
 ### How many inscriptions have GR as one of their languages?
 ```{r}
-grep(x = EDCS$language, "GR", value = TRUE) %>% 
-  length()
+grep(x = EDCS$language, "GR", value = TRUE) %>%
+  length() -> greek
+
+greek
+
+greek/(nrow(EDCS)/100)
+```
+### How many and which combinations of languages are in EDCS?
+```{r}
+unique(EDCS$language)
 ```
 
 
 ## Province
 ```{r}
-EDCS %>% 
+EDCS %>%
   count(province, sort = TRUE)
 ```
 Some inscriptions have double provinces:
@@ -96,11 +104,11 @@ Moesia inferior | Moesia superior
 ```{r}
 str_split_fixed(EDCS$province, pattern = " \\| ", n=2) %>% as.data.frame() -> provinces
 
-provinces %>% 
-  cbind(combined = c(provinces$V1, provinces$V2)) %>% 
+provinces %>%
+  cbind(combined = c(provinces$V1, provinces$V2)) %>%
   filter(combined != "") -> provinces
 
-provinces %>% 
+provinces %>%
   count(combined, sort=TRUE)
 ```
 
@@ -118,58 +126,28 @@ length(str_subset(EDCS$Links, "epigraphy.packhum"))
 ```
 
 # Status attribute
-```{r}
-unique(str_count(EDCS$status, pattern = ";"))
-```
 
-```{r}
-str_split_fixed(EDCS$status, ";", n=13) %>% 
-  as.data.frame() -> EDCS_status
-EDCS_status
+******************************NEEDS updating 
 
-EDCS_status %>% 
-  cbind(combined = c(EDCS_status$V1,EDCS_status$V2,EDCS_status$V3,EDCS_status$V4,EDCS_status$V5,EDCS_status$V6,EDCS_status$V7,EDCS_status$V8,EDCS_status$V9,EDCS_status$V10,EDCS_status$V11,EDCS_status$V12, EDCS_status$V13)) %>% 
-  filter(combined != "") %>% 
-  mutate(combined_clean = str_replace_all(string = combined, pattern = "\\?", replacement = "")) %>% 
-  mutate(combined_clean = str_replace_all(string = combined_clean, pattern = "^ | $", replacement = "")) %>% 
-  count(combined_clean, sort=TRUE)
-```
 
-## Attribute 'Status' split into Inscription type, Inscribing Process and Status notation
-
-```{r}
-inscription_type <- c("tituli sepulcrales", "tituli fabricationis", "inscriptiones christianae", "tituli sacri", "tituli possessionis", "tituli operum", "miliaria", "tituli honorarii", "carmina", "signacula", "diplomata militaria", "leges", "defixiones", "termini", "reges", "signacula medicorum", "senatus consulta")
-
-inscribing_process <- c("sigilla impressa", "litterae erasae", "litterae in litura", "tesserae nummulariae")
-
-status_notation<- c("viri", "tria nomina", "mulieres", "nomen singulare", "liberti/libertae", "milites", "Augusti/Augustae", "ordo senatorius", "servi/servae", "officium/professio", "ordo decurionum", "sacerdotes pagani", "praenomen et nomen", "ordo equester", "seviri Augustales", "sacerdotes christiani")
-```
-
-```{r}
-EDCS$inscription_type <- ifelse(grepl(inscription_type, EDCS$status, ignore.case = T), inscription_type, NA)
-EDCS$inscribing_process <- ifelse(grepl(inscribing_process, EDCS$status, ignore.case = T), inscribing_process, NA)
-EDCS$status_notation <- ifelse(grepl(status_notation, EDCS$status, ignore.case = T), status_notation, NA)
-```
-
-##################### This still needs to be fixed as the categories are recroded only once 
 
 ### Type of inscription
 ```{r}
-EDCS %>% 
-  count(inscription_type)
+EDCS %>%
+    count(inscr_type)
 ```
 
 ### Type of inscribing process
 ```{r}
-EDCS %>% 
-    count(inscribing_process) 
+EDCS %>%
+    count(inscribing_process)
 ```
 
 
 ### Type of status notation
 ```{r}
-EDCS %>% 
-  count(status_notation) 
+EDCS %>%
+  count(status_notation)
 ```
 
 
@@ -177,7 +155,7 @@ EDCS %>%
 
 ### Which inscriptions have geospatial coordinates?
 ```{r}
-EDCS %>% 
+EDCS %>%
   dplyr::filter(!is.na(Latitude)) -> location
 # how many inscriptions have latitude
 nrow(location)
@@ -193,8 +171,37 @@ location$Longitude <- as.numeric(location$Longitude)
 ```{r}
 location$ID <- location$`EDCS-ID`
 head(location)
+
 ```
 
+### How precise are the coordinates (how many decimal numbers have) 
+```{r}
+decimalplaces<-function(x) {
+  x_str <- toString(x)
+  x_str<- str_split(x_str, "\\.")
+  nchar(x_str[[1]][2])
+}
+
+### latitude
+lat_df<- as.data.frame(EDCS$Latitude) %>%  
+  mutate(decimals = unlist(map(EDCS$Latitude, decimalplaces)))
+
+lat_df_count<- lat_df %>% 
+  count(decimals, sort = T) %>% 
+  mutate(percent = n/(sum(n)/100))
+
+lat_df_count
+
+### longitude
+long_df<- as.data.frame(EDCS$Longitude) %>%  
+  mutate(decimals = unlist(map(EDCS$Longitude, decimalplaces)))
+
+long_df_count<- long_df %>% 
+  count(decimals, sort = T) %>% 
+  mutate(percent = n/(sum(n)/100))
+
+long_df_count
+```
 
 
 ### Mapped inscriptions with known coordinates - for full dataset be careful before running
@@ -203,13 +210,13 @@ map_all <- leaflet(width="100%") %>%
  addProviderTiles("Stamen.TerrainBackground")%>% # Add CartoDB map tiles
 # addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
 # addProviderTiles("Esri.WorldImagery", group = "ESRI Aerial") %>%
-# addPolylines(data = roads, color = "purple", weight = 2, opacity = 0.7) %>% 
+# addPolylines(data = roads, color = "purple", weight = 2, opacity = 0.7) %>%
   setView( lng = 22.326743, lat = 46.897122, zoom = 4 ) %>%
-  #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>% 
-#  addCircles(lng = location$Longitude, lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>% 
+  #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>%
+#  addCircles(lng = location$Longitude, lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>%
   addCircles(lng = location$Longitude,  
              lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
-             popup = paste0("<b> InscriptionID: </b>", location$ID 
+             popup = paste0("<b> InscriptionID: </b>", location$ID
                              # "<br><b> Province: </b>", location$province,
                              #<br><b> Type of inscription: </b>", lat_long_milestone$type_of_inscription_clean,
                              # "<br><b> Type of monument: </b>", lat_long_milestone$type_of_monument_clean,
@@ -217,7 +224,7 @@ map_all <- leaflet(width="100%") %>%
                              # "<br><b> Not after (date): </b>", lat_long_milestone$not_after,
                              #   "<br><b> Commentary: </b>", lat_long_milestone$commentary,
                             )
-             ) %>% 
+             ) %>%
 addLegend(position = "topright",
   colors = c("Purple"),
   labels = c("Inscription (n = 383,322)"), opacity = 1,
@@ -232,7 +239,7 @@ map_all
 
 ## Start year
 ```{r}
-EDCS %>% 
+EDCS %>%
   filter(!is.na(EDCS$`dating from`)) -> has_start_yr
 # how many inscriptions have start year
 nrow(has_start_yr)
@@ -242,7 +249,7 @@ nrow(has_start_yr)/(nrow(EDCS)/100)
 
 ## End year
 ```{r}
-EDCS %>% 
+EDCS %>%
   filter(!is.na(EDCS$`dating to`)) -> has_end_yr
 # how many inscriptions have end year
 nrow(has_end_yr)
@@ -250,10 +257,44 @@ nrow(has_end_yr)
 nrow(has_end_yr)/(nrow(EDCS)/100)
 ```
 
+### Date Range
+```{r}
+unique(has_end_yr$`dating to`)
+class(has_end_yr$`dating to`)
+
+unique(has_end_yr$`dating to`)
+```
+
+```{r}
+EDCS<- EDCS %>% 
+  mutate(date_from_1 = as.numeric(str_extract(EDCS$`dating from`, pattern = "^[-]*[:digit:]+"))) %>% 
+  mutate(date_to_1 = as.numeric(str_extract(EDCS$`dating to`, pattern = "^[-]*[:digit:]+")))
+```
+
+```{r}
+summary(EDCS$date_from_1)
+
+plot(table(EDCS$date_from_1))
+```
+
+```{r}
+
+summary(EDCS$date_to_1)
+plot(table(EDCS$date_to_1))
+```
+Both dates
+```{r}
+EDCS %>% 
+  filter(!is.na(date_from_1) & !is.na(date_to_1)) -> has_both_dates
+
+nrow(has_both_dates)/(nrow(EDCS)/100)
+```
+
+
 # Material
 
 ```{r}
-EDCS %>% 
+EDCS %>%
   count(Material, sort= TRUE)
 ```
 
@@ -265,12 +306,12 @@ unique(EDCS$Comment)
 
 # Text of inscription
 
-## How many inscriptions contain a text of an isncription
+## How many inscriptions contain a text of an inscription
 
 ```{r}
 length(na.omit(EDCS$clean_text_interpretive_word))
 ```
-In percent: 
+In percent:
 ```{r}
 length(na.omit(EDCS$clean_text_interpretive_word))/(nrow(EDCS)/100)
 ```
@@ -279,7 +320,7 @@ length(na.omit(EDCS$clean_text_interpretive_word))/(nrow(EDCS)/100)
 
 Original text before cleaning:
 ```{r}
-sum(lengths(gregexpr("\\w+", EDCS$inscription)) + 1) 
+sum(lengths(gregexpr("\\w+", EDCS$inscription)) + 1)
 
 #different counting method
 sum(na.omit(str_count(EDCS$inscription, '\\w+')))
@@ -287,8 +328,15 @@ sum(na.omit(str_count(EDCS$inscription, '\\w+')))
 
 Text after cleaning:
 ```{r}
-sum(lengths(gregexpr("\\w+", EDCS$clean_text_interpretive_word)) + 1) 
+sum(lengths(gregexpr("\\w+", EDCS$clean_text_interpretive_word)) + 1)
 
 #different counting method
 sum(na.omit(str_count(EDCS$clean_text_interpretive_word, '\\w+')))
 ```
+
+
+
+
+
+
+

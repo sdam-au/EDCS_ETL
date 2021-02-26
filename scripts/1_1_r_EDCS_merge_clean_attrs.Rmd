@@ -1,0 +1,167 @@
+---
+title: "EDCS access and merging of TXT files"
+author: "Petra Hermankova"
+date: "27/11/2020"
+output:
+  html_document:
+    theme: united
+    toc: yes
+    toc_float: true
+    number_sections: true
+    toc_depth: 2
+    df_print: paged
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+require("knitr")
+opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
+
+library(tidyverse)
+library(data.table)
+library(sdam)
+library(jsonlite)
+```
+
+# Merging the CSV files into one dataframe
+```{r}
+# listing all tsv files
+temp <- list.files(path= "../data/2020_12_allProvinces/", pattern = "*.tsv")
+```
+
+## Loading data from multiple TSV files
+
+```{r}
+setwd("~/Github/EDCS_ETL/data/2020_12_allProvinces")
+# loading multiples files
+EDCS <- temp %>% map_df(~read_tsv(., col_types = cols(.default = "c")))
+
+setwd("/home/petra/Github/ClaussSlaby_ETL/")
+```
+
+```{r}
+head(EDCS)
+```
+
+```{r}
+names(EDCS)
+```
+
+# Cleaning attributes
+
+Some of the attributes need to be streamlined as they contain either lists of values rathen than individual observations, but they have a form of a text string. They need to be converted to a list so they can be analysed computationally.
+
+## Cleaning place attribute
+
+Transforming string character into list for better manipulation.
+```{r}
+EDCS$place_list<- str_split(EDCS$place, " / ")
+```
+
+How many unique place names there is?
+```{r}
+length(unique(unlist(EDCS$place_list)))
+```
+
+## Cleaning 'dating from' attribute
+
+1. Transforming string containing multiple values into a list.
+2. Transforming character into numeric value.
+```{r}
+EDCS$`dating from`
+```
+
+
+## Cleaning 'dating to' attribute
+
+1. Transforming string containing multiple values into a list.
+2. Transforming character into numeric value.
+
+## Cleaning 'status' attribute
+
+```{r}
+EDCS$status_list<- str_split(EDCS$status, "; ")
+```
+
+Ceategorisation based on the typology of keyword in the attribute status:
+
+```{r}
+inscription_type_list <- c("tituli sepulcrales", "tituli fabricationis", "inscriptiones christianae", "tituli sacri", "tituli possessionis", "tituli operum", "miliaria", "tituli honorarii", "carmina", "signacula", "diplomata militaria", "leges", "defixiones", "termini", "reges", "signacula medicorum", "senatus consulta")
+
+inscribing_process_list <- c("sigilla impressa", "litterae erasae", "litterae in litura", "tesserae nummulariae")
+
+status_notation_list<- c("viri", "tria nomina", "mulieres", "nomen singulare", "liberti/libertae", "milites", "Augusti/Augustae", "ordo senatorius", "servi/servae", "officium/professio", "ordo decurionum", "sacerdotes pagani", "praenomen et nomen", "ordo equester", "seviri Augustales", "sacerdotes christiani")
+```
+
+Division the status keywords into their own attributes, base on their purpose:
+1. inscription type
+2. notation of a societal status of a person on the inscription
+3. details about process of inscribing, execution
+
+```{r}
+EDCS <- EDCS %>% 
+  mutate(inscr_type = str_extract_all(pattern = paste(inscription_type_list, collapse="|"), string = EDCS$status)) %>% 
+  mutate(status_notation = str_extract_all(pattern = paste(status_notation_list, collapse="|"), string = EDCS$status)) %>% 
+  mutate(inscr_process = str_extract_all(pattern = paste(inscribing_process_list, collapse="|"), string = EDCS$status))
+```
+
+CONTINUE: need to convert character (0) to NA or eliminate.
+
+```{r}
+EDCS$status_notation
+
+```
+
+## Cleaning 'province' attribute
+
+Some records contain multiple values provinces, separated by |, such as: 
+
+`Belgica | Germania inferior`
+`Pannonia inferior | Pannonia superior`
+`Moesia inferior | Moesia superior`
+
+```{r}
+EDCS$province_list <- str_split(EDCS$province, " \\| ")
+```
+
+Listing all the provinces and their variants:
+```{r}
+unique(EDCS$province_list)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Saving to Scienc Data
+
+
+
+```{r, echo=FALSE}
+mycred_secret<- readLines("~/mysecret.txt")
+```
+
+```{r}
+EDCS_json <- jsonlite::toJSON(EDCS, auto_unbox=TRUE)
+write(EDCS_json, file="EDCS_merged_2020-12-09.json")
+request("EDCS_merged_2020-12-09.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+        method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
+```
+
+```{r, echo=FALSE}
+remove(mycred_secret)
+```
