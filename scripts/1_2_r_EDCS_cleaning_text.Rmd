@@ -31,7 +31,7 @@ mycred_secret<- readLines("~/mysecret.txt")
 ```
 
 ```{r, loading data}
-resp = request("EDCS_merged_2020-12-09.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
+resp = request("EDCS_merged_cleaned_attrs_2021-03-01.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
 ```
 
 ```{r, echo=FALSE}
@@ -665,8 +665,9 @@ EDCS_clean <- EDCS %>%
    mutate(inscription_stripped12 = str_replace(EDCS_clean$inscription_stripped11, "\\bThe .*","")) %>%
    mutate(other_notes8 = str_extract(EDCS_clean$inscription_stripped12, ".* the .*")) %>%
    mutate(inscription_stripped13 = str_replace(EDCS_clean$inscription_stripped12, ".* the .*","")) %>%
-   mutate(inscription_stripped14 = str_replace(EDCS_clean$inscription_stripped13, "\\r+",""))
+   mutate(inscription_stripped_final = str_replace(EDCS_clean$inscription_stripped13, "\\r+",""))
 ```
+
 
 ## Building cleaning functions for specific datasets
 
@@ -712,11 +713,11 @@ cleaning_interpretive_edcs <- function(epigraphic_dataset){
 ### Enriching the full dataset with conservative and interpretive cleaned versions of the text:
 ```{r}
 EDCS_clean <- EDCS_clean %>%
-   mutate(clean_text_interpretive_word = cleaning_interpretive_edcs(EDCS_clean$inscription_stripped14))
+   mutate(clean_text_interpretive_word = cleaning_interpretive_edcs(EDCS_clean$inscription_stripped_final))
 ```
 
 
-### Combining notes extracted from the text of the inscription by category:
+### Combining notes extracted from the text of the inscription by their category:
 ```{r}
 EDCS_clean <- EDCS_clean %>%
   mutate(notes_dating = paste(EDCS_clean$dating_notes, EDCS_clean$dating_notes2))%>%
@@ -727,11 +728,15 @@ EDCS_clean <- EDCS_clean %>%
   mutate(notes_comments = str_replace_all(notes_comments, "NA", ""))
 ```
 
+```{r}
+names(EDCS_clean)
+```
+
 
 ### Selecting the columns relevant for further analysis (for export)
 ```{r}
 EDCS_export <- EDCS_clean %>%
-  select(`EDCS-ID`, publication, province, place, Links, language, `dating from`, `dating to`, status, Latitude, Longitude, photo, Material, Comment, notes_dating, notes_references, notes_comments, inscription, inscription_stripped14, clean_text_interpretive_word)
+  select(`EDCS-ID`, publication, province, province_list , place, place_list, Links, language, `dating from`, `dating to`, start_yr, end_yr_list, end_yr_1, notes_dating, status, status_list, inscr_type, status_notation, inscr_process, Latitude, Longitude, photo, Material, Comment, notes_references, notes_comments, inscription, inscription_stripped_final, clean_text_interpretive_word, notes_dating, notes_references, notes_comments)
 ```
 
 
@@ -740,8 +745,8 @@ EDCS_export <- EDCS_clean %>%
 ```{r}
 EDCS_cleaned_json <- jsonlite::toJSON(EDCS_export, auto_unbox = TRUE)
 mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_cleaned_json, file="output/EDCS_text_cleaned_2021-01-21.json")
-request("output/EDCS_text_cleaned_2021-01-21.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+write(EDCS_cleaned_json, file="output/EDCS_text_cleaned_2021-03-01.json")
+request("output/EDCS_text_cleaned_2021-03-01.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 

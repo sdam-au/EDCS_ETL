@@ -31,7 +31,7 @@ mycred_secret<- readLines("~/mysecret.txt")
 ```
 
 ```{r, loading data}
-resp = request("EDCS_text_cleaned_2021-01-20.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
+resp = request("EDCS_text_cleaned_2021-03-01.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
 ```
 
 ```{r, echo=FALSE}
@@ -40,8 +40,8 @@ remove(mycred_secret)
 
 OR of you don't have Sciencedata credentials:
 ```{r, loading data public, eval=FALSE}
-#The folder still needs to made public by owner (Vojtech Kase)
-resp = request("EDCS_text_cleaned_2020-12-29.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET")
+#The folder still needs to made public by owner (Vojtech Kase) https://sciencedata.dk/shared/1f5f56d09903fe259c0906add8b3a55e
+resp2 = request("EDCS_text_cleaned_2021-03-01.json", path="/shared/1f5f56d09903fe259c0906add8b3a55e", method="GET")
 ```
 
 Make a list and tibble from the downloaded dataset
@@ -51,7 +51,6 @@ EDCS = as_tibble(list_json)
 ```
 
 # Dataset exploration
-
 ```{r}
 names(EDCS)
 ```
@@ -60,8 +59,20 @@ names(EDCS)
 head(EDCS)
 ```
 
+## Some of the records are empty
 
-## How many inscriptions there are in total?
+```{r}
+EDCS_empty<- EDCS %>% 
+  filter(is.na(`EDCS-ID`))
+```
+
+## Non-empty records
+```{r}
+EDCS<- EDCS %>% 
+  filter(!is.na(`EDCS-ID`))
+```
+
+## How many non empty inscriptions there are in total?
 ```{r}
 nrow(EDCS)
 ```
@@ -81,9 +92,9 @@ grep(x = EDCS$language, "GR", value = TRUE) %>%
   length() -> greek
 
 greek
-
 greek/(nrow(EDCS)/100)
 ```
+
 ### How many and which combinations of languages are in EDCS?
 ```{r}
 unique(EDCS$language)
@@ -95,7 +106,8 @@ unique(EDCS$language)
 EDCS %>%
   count(province, sort = TRUE)
 ```
-Some inscriptions have double provinces:
+
+Some inscriptions have double provinces, e.g.:
 
 Belgica | Germania inferior
 Pannonia inferior | Pannonia superior
@@ -112,6 +124,33 @@ provinces %>%
   count(combined, sort=TRUE)
 ```
 
+## Place
+```{r}
+# unique place names
+length(unique(unlist(EDCS$place_list)))
+```
+
+```{r}
+#first element of the place list
+plc_1<- map(EDCS$place_list,1)
+
+plc1_df <- plc_1 %>% 
+  unlist() 
+
+plc1_df <- as.data.frame(plc1_df)
+plc1_df %>% 
+  count(plc1_df, sort=T)
+```
+
+```{r}
+place<- unnest_longer(EDCS, col=place_list, simplify = T)
+```
+```{r}
+place %>% 
+  count(place_list, sort=T)
+```
+
+
 
 # How many inscriptions are linked to EDH
 
@@ -122,34 +161,33 @@ length(str_subset(EDCS$Links, "heidelberg"))
 # How many inscriptions are linked to PHI
 
 ```{r}
-length(str_subset(EDCS$Links, "epigraphy.packhum"))
+length(str_subset(EDCS$Links, "packhum"))
 ```
 
 # Status attribute
 
-******************************NEEDS updating 
-
-
-
 ### Type of inscription
 ```{r}
-EDCS %>%
-    count(inscr_type)
+inscr_type<- unlist(EDCS$inscr_type) 
+  
+inscr_type_df <- as.data.frame(inscr_type) %>% count(inscr_type, sort = T)
+inscr_type_df
 ```
 
 ### Type of inscribing process
 ```{r}
-EDCS %>%
-    count(inscribing_process)
+inscr_process<- unlist(EDCS$inscr_process) 
+inscr_process_df <- as.data.frame(inscr_process) %>% count(inscr_process, sort = T)
+inscr_process_df
 ```
 
 
 ### Type of status notation
 ```{r}
-EDCS %>%
-  count(status_notation)
+status_notation<- unlist(EDCS$status_notation) 
+status_notation_df <- as.data.frame(status_notation) %>% count(status_notation, sort = T)
+status_notation_df
 ```
-
 
 ## Coordinates
 
@@ -169,9 +207,8 @@ location$Longitude <- as.numeric(location$Longitude)
 ```
 
 ```{r}
-location$ID <- location$`EDCS-ID`
-head(location)
-
+location %>% 
+  rename(EDCS_ID = `EDCS-ID`)
 ```
 
 ### How precise are the coordinates (how many decimal numbers have) 
@@ -205,7 +242,7 @@ long_df_count
 
 
 ### Mapped inscriptions with known coordinates - for full dataset be careful before running
-```{r}
+```{r, eval=FALSE}
 map_all <- leaflet(width="100%") %>%
  addProviderTiles("Stamen.TerrainBackground")%>% # Add CartoDB map tiles
 # addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
@@ -227,10 +264,10 @@ map_all <- leaflet(width="100%") %>%
              ) %>%
 addLegend(position = "topright",
   colors = c("Purple"),
-  labels = c("Inscription (n = 383,322)"), opacity = 1,
-  title = "Inscriptions in the EDCS database"
+  labels = c("Inscription (n = 486,699)"), opacity = 1,
+  title = "Inscriptions in the EDCS database with known coordinates"
 )
-map_all
+# map_all
 ```
 
 
@@ -240,7 +277,7 @@ map_all
 ## Start year
 ```{r}
 EDCS %>%
-  filter(!is.na(EDCS$`dating from`)) -> has_start_yr
+  filter(!is.na(EDCS$start_yr)) -> has_start_yr
 # how many inscriptions have start year
 nrow(has_start_yr)
 # how many inscriptions have start year in %
@@ -250,7 +287,7 @@ nrow(has_start_yr)/(nrow(EDCS)/100)
 ## End year
 ```{r}
 EDCS %>%
-  filter(!is.na(EDCS$`dating to`)) -> has_end_yr
+  filter(!is.na(EDCS$end_yr_1)) -> has_end_yr
 # how many inscriptions have end year
 nrow(has_end_yr)
 # how many inscriptions have end year in %
@@ -259,33 +296,42 @@ nrow(has_end_yr)/(nrow(EDCS)/100)
 
 ### Date Range
 ```{r}
-unique(has_end_yr$`dating to`)
-class(has_end_yr$`dating to`)
+has_end_yr<- has_end_yr %>% 
+  mutate(date_interval = (start_yr - end_yr_1) * -1)
 
-unique(has_end_yr$`dating to`)
+table(has_end_yr$date_interval)
+
+date_int<- has_end_yr %>% 
+  count(date_interval, sort=T) %>% 
+  filter(date_interval > 0 & date_interval < 1000) %>% 
+  mutate(freq = n/(nrow(has_end_yr)/100))
+  
+date_int %>% 
+  ggplot(aes(x=date_interval,)) + 
+  geom_histogram(fill="blue", color="blue", alpha=0.5, size=0.2) +
+  labs(x = "Length of dating interval", y = "%", title ="Length of dating intervals in years in EDCS dataset") +
+  #geom_vline(aes(xintercept=100))+
+  coord_cartesian(xlim = c(0, 1000), ylim=c(0,100))
+
+  
+```
+
+
+```{r}
+summary(EDCS$start_yr)
+
+plot(table(EDCS$start_yr))
 ```
 
 ```{r}
-EDCS<- EDCS %>% 
-  mutate(date_from_1 = as.numeric(str_extract(EDCS$`dating from`, pattern = "^[-]*[:digit:]+"))) %>% 
-  mutate(date_to_1 = as.numeric(str_extract(EDCS$`dating to`, pattern = "^[-]*[:digit:]+")))
+summary(EDCS$end_yr_1)
+plot(table(EDCS$end_yr_1))
 ```
 
-```{r}
-summary(EDCS$date_from_1)
-
-plot(table(EDCS$date_from_1))
-```
-
-```{r}
-
-summary(EDCS$date_to_1)
-plot(table(EDCS$date_to_1))
-```
 Both dates
 ```{r}
 EDCS %>% 
-  filter(!is.na(date_from_1) & !is.na(date_to_1)) -> has_both_dates
+  filter(!is.na(start_yr) & !is.na(end_yr_1)) -> has_both_dates
 
 nrow(has_both_dates)/(nrow(EDCS)/100)
 ```
@@ -301,7 +347,7 @@ EDCS %>%
 # Comments
 
 ```{r}
-unique(EDCS$Comment)
+unique(EDCS$Comment)[1:20]
 ```
 
 # Text of inscription

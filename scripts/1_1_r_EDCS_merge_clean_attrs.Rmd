@@ -67,14 +67,29 @@ length(unique(unlist(EDCS$place_list)))
 1. Transforming string containing multiple values into a list.
 2. Transforming character into numeric value.
 ```{r}
-EDCS$`dating from`
+table(EDCS$`dating from`)
+EDCS$start_yr <- as.numeric(EDCS$`dating from`)
+summary(EDCS$start_yr)
 ```
-
 
 ## Cleaning 'dating to' attribute
 
 1. Transforming string containing multiple values into a list.
 2. Transforming character into numeric value.
+
+```{r}
+str_subset(EDCS$`dating to`, ";")
+```
+
+```{r}
+
+EDCS$end_yr_list<- str_split(EDCS$`dating to`, ";\\s*")
+```
+
+#### Converting the first value of the list to numeric value
+```{r}
+EDCS$end_yr_1<- as.numeric(map(EDCS_end_yr_list, 1))
+```
 
 ## Cleaning 'status' attribute
 
@@ -82,7 +97,7 @@ EDCS$`dating from`
 EDCS$status_list<- str_split(EDCS$status, "; ")
 ```
 
-Ceategorisation based on the typology of keyword in the attribute status:
+### Categorisation based on the typology of keyword in the attribute status:
 
 ```{r}
 inscription_type_list <- c("tituli sepulcrales", "tituli fabricationis", "inscriptiones christianae", "tituli sacri", "tituli possessionis", "tituli operum", "miliaria", "tituli honorarii", "carmina", "signacula", "diplomata militaria", "leges", "defixiones", "termini", "reges", "signacula medicorum", "senatus consulta")
@@ -104,11 +119,12 @@ EDCS <- EDCS %>%
   mutate(inscr_process = str_extract_all(pattern = paste(inscribing_process_list, collapse="|"), string = EDCS$status))
 ```
 
-CONTINUE: need to convert character (0) to NA or eliminate.
+#### Convert character (0) to NA
 
 ```{r}
-EDCS$status_notation
-
+EDCS$inscr_type <- lapply(EDCS$inscr_type, function(x) if(identical(x, character(0))) NA_character_ else x)
+EDCS$status_notation <- lapply(EDCS$status_notation, function(x) if(identical(x, character(0))) NA_character_ else x)
+EDCS$inscr_process <- lapply(EDCS$inscr_process, function(x) if(identical(x, character(0))) NA_character_ else x)
 ```
 
 ## Cleaning 'province' attribute
@@ -127,29 +143,7 @@ Listing all the provinces and their variants:
 ```{r}
 unique(EDCS$province_list)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Saving to Scienc Data
-
-
+# Saving to Science Data
 
 ```{r, echo=FALSE}
 mycred_secret<- readLines("~/mysecret.txt")
@@ -157,8 +151,8 @@ mycred_secret<- readLines("~/mysecret.txt")
 
 ```{r}
 EDCS_json <- jsonlite::toJSON(EDCS, auto_unbox=TRUE)
-write(EDCS_json, file="EDCS_merged_2020-12-09.json")
-request("EDCS_merged_2020-12-09.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+write(EDCS_json, file="EDCS_merged_cleaned_attrs_2021-03-01.json")
+request("EDCS_merged_cleaned_attrs_2021-03-01.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 
