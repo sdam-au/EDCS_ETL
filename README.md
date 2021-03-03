@@ -37,13 +37,16 @@ The scripts merge data from these sources into a dataframe, which is then export
 
 [EDCS dataset metadata](https://docs.google.com/spreadsheets/d/17k4quLM6RiEu821n3caitK8labzuurIGmzf0W1bHnss/edit?usp=sharing) with descriptions for all attributes.
 
-## Scripts - under construction
-
-```
+## Scripts
 
 ### Data accessing scripts
-Primarily we use Python scripts (Jupyter notebooks) for accessing the API & extracting data from it, parse the XML files for additional metadata and combining these two reseources into one. Subsequently, we use both R and Python for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
 
+The data is accessed via [Epigraphy Scraper Jupyter Notebook](https://github.com/mqAncientHistory/EpigraphyScraperNotebook) and saved as a series of CSV files by their respective Roman Province.
+
+We use R for accessing the data from a series of CSVs and combining them into one dataframe, exported as JSON file. Subsequently, we use series of R scripts for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
+
+
+``` in progress
 The data via the API are easily accessible and might be extracted by means of R and Python in a rather straigtforward way. 
 First we extract the geocordinates from the public API, using the [script 1_0](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_0_py_EXTRACTING-GEOGRAPHIES.ipynb). 
 
@@ -121,13 +124,27 @@ _Cleaning and streamlining of the text of the inscription_
 
 # Script accessing workflow:
 
-To upload these data into **Python** as a pandas dataframe, you can use this (using th [sddk](https://pypi.org/project/sddk/) package):
+**PYTHON**
+
+To upload these data into **Python** as a pandas dataframe, you can use the [SDDK package](https://pypi.org/project/sddk/)):
 
 ```python
 !pip install sddk
 import sddk
 auth = sddk.configure("SDAM_root", "648597@au.dk") # where "648597@au.dk is owner of the shared folder, i.e. Vojtěch
 EDH_utf8 = sddk.read_file("SDAM_data/EDH/EDH_cleaned.json", "df", auth)
+```
+
+**R**
+
+To upload these data into **R** as a tibble/dataframe, you can use [sdam package](https://github.com/sdam-au/sdam)):
+
+```r
+user <- readline("your sciencedata username: ")
+resp = request("EDH_text_cleaned_[timestamp].json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDH/public", method="GET", cred=c(user, getPass("your sciencedata password: ")))
+
+list_json <- jsonlite::fromJSON(resp)
+EDH_tibble = as_tibble(list_json)
 ```
 
 
