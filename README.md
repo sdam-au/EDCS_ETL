@@ -61,7 +61,9 @@ In the next step we clean and streamline the API attributes in a reproducible wa
 The cleaning process of the text of inscriptions is in the [script 1_45](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_5_r_TEXT_INCRIPTION_CLEANING.Rmd).
 ---
 
-#### [1_0_py_EXTRACTING-GEOGRAPHIES.ipynb](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_0_py_EXTRACTING-GEOGRAPHIES.ipynb)
+```
+
+#### [1_1_r_EDCS_merge_clean_attrs.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_1_r_EDCS_merge_clean_attrs.Rmd)
 
 _Extracting geographical coordinates_
 || File | Source commentary |
@@ -69,7 +71,7 @@ _Extracting geographical coordinates_
 | input |`edhGeographicData.json`| containting all EDH geographies, loaded from [https://edh-www.adw.uni-heidelberg.de/data/export](https://edh-www.adw.uni-heidelberg.de/data/export)
 | output | `EDH_geo_dict_[timestamp].json` ||
 
-#### [1_1_py_EXTRACTION_edh-inscriptions-from-web-api.ipynb](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_1_py_EXTRACTION_edh-inscriptions-from-web-api.ipynb)
+#### [1_2_r_EDCS_cleaning_text.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_2_r_EDCS_cleaning_text.Rmd)
  
 _Extracting all inscriptions from API_
 || File | Source commentary |
@@ -77,7 +79,7 @@ _Extracting all inscriptions from API_
 | input| requests to [https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?](https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?)||
 | output| `EDH_onebyone[timestamp].json`||
 
-#### [1_2_py_EXTRACTION_edh-xml_files.ipynb](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_2_py_EXTRACTION_edh-xml_files.ipynb)
+#### [1_3_r_EDCS_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_3_r_EDCS_exploration.Rmd)
 
 _Extracting XML files_
 || File | Source commentary |
@@ -85,7 +87,7 @@ _Extracting XML files_
 | input| `edhEpidocDump_HD[first_number]-HD[last_number].zip`| [https://edh-www.adw.uni-heidelberg.de/data/export](https://edh-www.adw.uni-heidelberg.de/data/export)
 | output| `EDH_xml_data_[timestamp].json`||
 
-#### [1_3_py_MERGING_API_GEO_and_XML.ipynb](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_3_py_MERGING_API_GEO_and_XML.ipynb)
+#### [1_4_r_EDCS_text_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_4_r_EDCS_text_exploration.Rmd)
 
 _Merging geographies, API, and XML files_
 || File | Source commentary |
@@ -95,26 +97,8 @@ _Merging geographies, API, and XML files_
 | input 3| `EDH_xml_data_[timestamp].json`|| 
 | output| `EDH_merged_[timestamp].json`||
   
-#### [1_4_r_DATASET_CLEANING.Rmd](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_4_r_DATASET_ATTRIBUTES_CLEANING.Rmd)
-
-_Cleaning and streamlining attributes_
-|| File | Source commentary |
-| :---       |         ---: |         ---: |
-| input| `EDH_merged_[timestamp].json`||
-| output| `EDH_attrs_cleaned_[timestamp].json`||
-
-
-#### [1_5_r_TEXT_INSCRIPTION_CLEANING](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_5_r_TEXT_INSCRIPTION_CLEANING.Rmd)
-
-_Cleaning and streamlining of the text of the inscription_
-|| File | Source commentary |
-| :---       |         ---: |         ---: |
-| input| `EDH_attrs_cleaned_[timestamp].json`||
-| output| `EDH_text_cleaned_[timestamp].json` ||
-
 ---
 
-> (this needs to be finished)
 
 
 ```
