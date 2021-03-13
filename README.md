@@ -29,7 +29,7 @@ or
 
 To access the files created in previous steps of the ETL process, you can use the dataset from the public folder, or you have to rerun all scripts on your own.
 
-**The original data** from the scripts come from the webiteface at manfredclauss.de
+**The original data** from the scripts come from the webinterface at manfredclauss.de
 
 The scripts merge data from these sources into a dataframe, which is then exported into one JSON file for further usage.
 
