@@ -116,7 +116,7 @@ To upload these data into **Python** as a pandas dataframe, you can use the [SDD
 !pip install sddk
 import sddk
 auth = sddk.configure("SDAM_root", "648597@au.dk") # where "648597@au.dk is owner of the shared folder, i.e. Vojtěch
-EDH_utf8 = sddk.read_file("SDAM_data/EDH/EDH_cleaned.json", "df", auth)
+EDCS = sddk.read_file("SDAM_data/EDCS/public/EDCS_text_cleaned_2021-03-01.json.json", "df", auth)
 ```
 
 **R**
@@ -127,7 +127,7 @@ To upload these data into **R** as a tibble/dataframe, you can use [sdam package
 resp = request("EDCS_text_cleaned_2021-03-01.json", path="/public/1f5f56d09903fe259c0906add8b3a55e/", method="GET", anonymous = TRUE, cred = NULL)
 
 list_json <- jsonlite::fromJSON(resp)
-EDH_tibble = as_tibble(list_json)
+EDCS = as_tibble(list_json)
 ```
 
 
