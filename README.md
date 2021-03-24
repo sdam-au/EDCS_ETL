@@ -58,18 +58,25 @@ _Merging CSV files and cleaning attributes_
 _Cleaning text of an inscription_
 || File | Source commentary |
 | :---       |         ---: |         ---: |
-| input| requests to [https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?](https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?)||
+| input| `EDCS_merged_cleaned_attrs_[timestamp].json`||
 | output| `EDH_text_cleaned_[timestamp].json`||
 
 #### [1_3_r_EDCS_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_3_r_EDCS_exploration.Rmd)
 
 _Exploration of the entire dataset_
+|| File | Source commentary |
+| :---       |         ---: |         ---: |
+| input| `EDH_text_cleaned_[timestamp].json`||
+| output| NA||
 
 
 #### [1_4_r_EDCS_text_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_4_r_EDCS_text_exploration.Rmd)
 
 _Exploration of the text of inscriptions_
-  
+ || File | Source commentary |
+| :---       |         ---: |         ---: |
+| input| `EDH_text_cleaned_[timestamp].json`||
+| output| NA||
 ---
 
 
