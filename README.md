@@ -41,69 +41,36 @@ The scripts merge data from these sources into a dataframe, which is then export
 
 ### Data accessing scripts
 
-The data is accessed via [Epigraphy Scraper Jupyter Notebook](https://github.com/mqAncientHistory/EpigraphyScraperNotebook) and saved as a series of CSV files by their respective Roman Province.
+The data is accessed via [Epigraphy Scraper Jupyter Notebook](https://github.com/mqAncientHistory/EpigraphyScraperNotebook) and saved as a series of CSV files by their respective Roman Province and saved in the folder `data`.
 
 We use R for accessing the data from a series of CSVs and combining them into one dataframe, exported as JSON file. Subsequently, we use series of R scripts for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
 
-
-``` in progress
-The data via the API are easily accessible and might be extracted by means of R and Python in a rather straigtforward way. 
-First we extract the geocordinates from the public API, using the [script 1_0](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_0_py_EXTRACTING-GEOGRAPHIES.ipynb). 
-
-As a next step we access the public API to access and download all the incriptions. To obtain the whole dataset of circa 81,000+ inscriptions into a Python dataframe takes about 12 minutes (see the respective [script 1_1](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_1_py_EXTRACTION_edh-inscriptions-from-web-api.ipynb)). We have decided to save the dataframe as a JSON file for interoperability reasons between Python and R.
-
-However, the dataset from the API is a simplified one (when compared with the records online and in XML), primarily to be used for queries in the web interface.  For instance, the API data encode the whole information about dating by means of two variables: "not_before" and "not_before". This makes us curious about how the data translate dating information like "around the middle of the 4th century CE." etc. Therefore, we decided to enrich the JSON created from the API files with data from the original XML files, which also including some additional variables (see [script 1_2](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_2_py_EXTRACTION_edh-xml_files.ipynb)).
-
-To enrich the JSON with geodata extracted in the script 1_0, we have developed the following script: [script 1_3](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_3_py_MERGING_API_GEO_and_XML.ipynb)).
-
-In the next step we clean and streamline the API attributes in a reproducible way, (see [script 1_4](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_4_r_DATASET_ATTRIBUTES_CLEANING.Rmd)) so they are ready for any future analysis. We keep the original attributes along with the new clean ones.
-
-The cleaning process of the text of inscriptions is in the [script 1_45](https://github.com/sdam-au/EDH_ETL/blob/master/scripts/1_5_r_TEXT_INCRIPTION_CLEANING.Rmd).
----
-
-```
-
 #### [1_1_r_EDCS_merge_clean_attrs.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_1_r_EDCS_merge_clean_attrs.Rmd)
 
-_Extracting geographical coordinates_
+_Merging CSV files and cleaning attributes_
 || File | Source commentary |
 | :---       |         ---: |         ---: |
-| input |`edhGeographicData.json`| containting all EDH geographies, loaded from [https://edh-www.adw.uni-heidelberg.de/data/export](https://edh-www.adw.uni-heidelberg.de/data/export)
-| output | `EDH_geo_dict_[timestamp].json` ||
+| input |`2020_12_allProvinces` in folder `data`| containting CSVs with inscriptions in individual provinces, accessed via [Epigraphy Scraper Jupyter Notebook](https://github.com/mqAncientHistory/EpigraphyScraperNotebook)
+| output | `EDCS_merged_cleaned_attrs_[timestamp].json` ||
 
 #### [1_2_r_EDCS_cleaning_text.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_2_r_EDCS_cleaning_text.Rmd)
  
-_Extracting all inscriptions from API_
+_Cleaning text of an inscription_
 || File | Source commentary |
 | :---       |         ---: |         ---: |
 | input| requests to [https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?](https://edh-www.adw.uni-heidelberg.de/data/api/inscriptions/search?)||
-| output| `EDH_onebyone[timestamp].json`||
+| output| `EDH_text_cleaned_[timestamp].json`||
 
 #### [1_3_r_EDCS_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_3_r_EDCS_exploration.Rmd)
 
-_Extracting XML files_
-|| File | Source commentary |
-| :---       |         ---: |         ---: |
-| input| `edhEpidocDump_HD[first_number]-HD[last_number].zip`| [https://edh-www.adw.uni-heidelberg.de/data/export](https://edh-www.adw.uni-heidelberg.de/data/export)
-| output| `EDH_xml_data_[timestamp].json`||
+_Exploration of the entire dataset_
+
 
 #### [1_4_r_EDCS_text_exploration.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_4_r_EDCS_text_exploration.Rmd)
 
-_Merging geographies, API, and XML files_
-|| File | Source commentary |
-| :---       |         ---: |         ---: |
-| input 1 | `EDH_geographies_raw.json`| [https://edh-www.adw.uni-heidelberg.de/data/export](https://edh-www.adw.uni-heidelberg.de/data/export)|
-| input 2| `EDH_onebyone[timestamp].json`||
-| input 3| `EDH_xml_data_[timestamp].json`|| 
-| output| `EDH_merged_[timestamp].json`||
+_Exploration of the text of inscriptions_
   
 ---
-
-
-
-
-
-
 
 
 # Script accessing workflow:
