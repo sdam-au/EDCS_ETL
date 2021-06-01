@@ -6,11 +6,7 @@
 
 ---
 
-This repository contains scripts for accesing, extracting and transforming epigraphic datasets from the [Epigraphic Database Clauss-Slaby](http://www.manfredclauss.de/). The repository will serve as a template for SDAM future collaborative research projects in accesing and analysing large digital datasets.
-
-The scripts access the main dataset via a webinterface, tranform it into one dataframe object and save the outcome to SDAM project directory on sciencedata.dk. Since the most important data files are in a [public folder](https://sciencedata.dk/shared/1f5f56d09903fe259c0906add8b3a55e), you can use and re-run our analyses even without a sciencedata.dk account and access to our team folder. If you face any issues with accessing the data, please contact us at sdam.cas@list.au.dk.
-
-A separate Python package ```sddk``` was created specifically for accessing sciencedata.dk from Python (see https://github.com/sdam-au/sddk). If you want to save the dataset in a different location, the scripts might be easily modified.
+This repository contains scripts for accesing, extracting and transforming epigraphic datasets from the [Epigraphic Database Clauss-Slaby](http://www.manfredclauss.de/). We have developed a series of scripts, merging the data together and streamlining them for quantitative analysis of epigraphic trends. 
 
 ## Authors
 * Petra Heřmánková [![](https://orcid.org/sites/default/files/images/orcid_16x16.png)](https://orcid.org/0000-0002-6349-0540) SDAM project, petra@ancientsocialcomplexity.org
@@ -19,7 +15,12 @@ A separate Python package ```sddk``` was created specifically for accessing scie
 [CC-BY-SA 4.0](https://github.com/sdam-au/EDH_ETL/blob/master/LICENSE.md)
 
 ## Data
-**The final dataset** produced by the scripts in this repo is called `EDCS_text_cleaned_[timestamp].json` and is located in our project datastorage on `sciencedata.dk` in the public folder. You can access the file without having to login into sciencedata.dk. Here is a path to the file on sciencedata.dk: 
+
+**The original raw data** is published at manfredclauss.de webinterface as HTML. The output of the webinterface is accessed and saved by a third party tool, [Lat Epig 2.0](https://github.com/mqAncientHistory/EpigraphyScraperNotebook), in a series of CVS files by their respective province. 
+
+The scripts access the main dataset via a webinterface, transform it into one dataframe object and save the outcome to SDAM project directory on sciencedata.dk. Since the most important data files are in a [public folder](https://sciencedata.dk/shared/1f5f56d09903fe259c0906add8b3a55e), you can use and re-run our analyses even without a sciencedata.dk account and access to our team folder. A separate Python package ```sddk``` was created specifically for accessing sciencedata.dk from Python (see https://github.com/sdam-au/sddk). If you want to save the dataset in a different location, the scripts might be easily modified.
+
+**The final (streamlined) dataset** produced by the scripts in this repo is called `EDCS_text_cleaned_[timestamp].json` and is located in our project datastorage on `sciencedata.dk` in the public folder. You can access the file without having to login into sciencedata.dk. Here is a path to the file on sciencedata.dk: 
 
 `SDAM_root/SDAM_data/EDCS/public/EDCS_text_cleaned[timestamp].json`
 
@@ -29,21 +30,22 @@ or
 
 To access the files created in previous steps of the ETL process, you can use the dataset from the public folder, or you have to rerun all scripts on your own.
 
-**The original data** from the scripts come from the webinterface at manfredclauss.de
-
-The scripts merge data from these sources into a dataframe, which is then exported into one JSON file for further usage.
 
 ## Metadata
 
-[EDCS dataset metadata](https://docs.google.com/spreadsheets/d/17k4quLM6RiEu821n3caitK8labzuurIGmzf0W1bHnss/edit?usp=sharing) with descriptions for all attributes.
+[EDCS dataset metadata](https://github.com/sdam-au/EDCS_ETL/blob/master/EDCS_dataset_metadata_SDAM.csv) with descriptions for all attributes.
 
 ## Scripts
 
 ### Data accessing scripts
 
-The data is accessed via [Epigraphy Scraper Jupyter Notebook](https://github.com/mqAncientHistory/EpigraphyScraperNotebook) and saved as a series of CSV files by their respective Roman Province and saved in the folder `data`.
+The data is accessed via a third party tool, [Lat Epig 2.0](https://github.com/mqAncientHistory/EpigraphyScraperNotebook), and saved as a series of CSV files by their respective Roman Province and saved in the folder `data`.
 
 We use R for accessing the data from a series of CSVs and combining them into one dataframe, exported as JSON file. Subsequently, we use series of R scripts for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
+
+#### 1_0_LatEpig_2_0
+
+_Accessing the files, using [Lat Epig 2.0 tool](https://github.com/mqAncientHistory/EpigraphyScraperNotebook)_ 
 
 #### [1_1_r_EDCS_merge_clean_attrs.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_1_r_EDCS_merge_clean_attrs.Rmd)
 
