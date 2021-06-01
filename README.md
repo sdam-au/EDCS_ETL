@@ -113,4 +113,5 @@ EDCS = as_tibble(list_json)
 
 ## How to cite us
 
-[Here will be DOI from Zenodo]
+`Heřmánková, Petra. (2021). EDCS_text_cleaned_2021_03_01 (Version 1.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.4888817`
+[https://zenodo.org/record/4888817](https://zenodo.org/record/4888817)
