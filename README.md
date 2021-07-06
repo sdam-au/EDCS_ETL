@@ -47,7 +47,7 @@ We use R for accessing the data from a series of CSVs and combining them into on
 
 _Accessing the files, using [Lat Epig 2.0 tool](https://github.com/mqAncientHistory/EpigraphyScraperNotebook)_ 
 
-Bash script to programmatically extract all non-empty inscriptions from individual provinces into separate CSV files. Run time ca. 16-20 hrs.
+Bash script to programmatically extract all non-empty inscriptions from individual provinces into separate CSV files. Run time ca. 16-20 hrs. The script is to be used within the local instantiation of the Lat Epig 2.0 tool. The CSV files will be saved within that repository to the folder `output`.
 
 #### [1_1_r_EDCS_merge_clean_attrs.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_1_r_EDCS_merge_clean_attrs.Rmd)
 
