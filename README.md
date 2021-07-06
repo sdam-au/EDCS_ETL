@@ -43,9 +43,11 @@ The data is accessed via a third party tool, [Lat Epig 2.0](https://github.com/m
 
 We use R for accessing the data from a series of CSVs and combining them into one dataframe, exported as JSON file. Subsequently, we use series of R scripts for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
 
-#### 1_0_LatEpig_2_0
+#### [1_0_LatEpig_2_0_search_by_provinces.bsh](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_0_LatEpig_2_0_search_by_provinces.bsh)
 
 _Accessing the files, using [Lat Epig 2.0 tool](https://github.com/mqAncientHistory/EpigraphyScraperNotebook)_ 
+
+Bash script to programmatically extract all non-empty inscriptions from individual provinces into separate CSV files. Run time ca. 16-20 hrs.
 
 #### [1_1_r_EDCS_merge_clean_attrs.Rmd](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_1_r_EDCS_merge_clean_attrs.Rmd)
 
