@@ -640,7 +640,7 @@ edcs_vir <- c("([I|V|X])(vir*)", "\\1 \\2")
 
 
 
-```{r}
+```{r, stripping the text of an inscription}
 EDCS_clean <- EDCS %>%
    mutate(dating_notes = str_extract(EDCS$inscription, "^[to|b:].*\\n\\n")) %>%
    mutate(inscription_stripped = str_replace(EDCS$inscription, "^[to|b:].*\\n\\n([^.*])", "\\1")) %>%
@@ -656,9 +656,9 @@ EDCS_clean <- EDCS %>%
    mutate(inscription_stripped6 = str_replace(EDCS_clean$inscription_stripped5, "\\n\\n(?!lauce|la s\\(olvit\\)).*","")) %>%
    mutate(other_notes5 = str_extract(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]")) %>%
    mutate(inscription_stripped7 = str_replace(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]","")) %>%
-   mutate(inscription_stripped8 = str_replace(EDCS_clean$inscription_stripped7, "^ \\n \\n","")) %>%
-   mutate(inscription_stripped9 = str_replace(EDCS_clean$inscription_stripped8, "\\n$","")) %>%
-   mutate(inscription_stripped10 = str_replace(EDCS_clean$inscription_stripped9, "^ \\n\\n","")) %>%
+   mutate(inscription_stripped8 = str_replace(EDCS_clean$inscription_stripped7, "^ \\n \\n","")) %>% # eliminating empty lines with spaces at the beginning
+   mutate(inscription_stripped9 = str_replace(EDCS_clean$inscription_stripped8, "\\n$","")) %>% # eliminating empty lines at the end
+   mutate(inscription_stripped10 = str_replace(EDCS_clean$inscription_stripped9, "^ \\n\\n","")) %>% # eliminating empty lines at the beginning
    mutate(other_notes6 = str_extract(EDCS_clean$inscription_stripped10, "\\n.*")) %>%
    mutate(inscription_stripped11 = str_replace_all(EDCS_clean$inscription_stripped10, "\\n.*","")) %>%
    mutate(other_notes7 = str_extract(EDCS_clean$inscription_stripped11, "\\bThe .*")) %>%
@@ -668,8 +668,51 @@ EDCS_clean <- EDCS %>%
    mutate(inscription_stripped_final = str_replace(EDCS_clean$inscription_stripped13, "\\r+",""))
 ```
 
+#### How many inscriptions were pre-cleaned: 
 
-## Building cleaning functions for specific datasets
+```{r}
+Text_with_dating <- EDCS %>% 
+  filter(notes_dating != " " )
+Text_with_dating
+
+Text_with_comments <- EDCS %>% 
+  filter(notes_comments != "     ")
+Text_with_comments
+
+Text_with_references <- EDCS %>% 
+  filter(notes_references != " " )
+Text_with_references
+```
+
+```{r}
+edcs_debug_date <- Text_with_dating %>% 
+  select(`EDCS-ID`, inscription, Comment, `dating from`, `dating to`)
+
+edcs_debug_comments <- Text_with_comments %>% 
+  select(`EDCS-ID`, inscription, Comment)
+
+edcs_debug_biblio <- Text_with_references %>% 
+  select(`EDCS-ID`, inscription, Comment)
+
+write_csv(edcs_debug_date, "output/EDCS_debug_date.csv")
+write_csv(edcs_debug_comments, "output/EDCS_debug_comments.csv")
+write_csv(edcs_debug_biblio, "output/EDCS_debug_biblio.csv")
+```
+
+
+
+```{r}
+precleaning <-  
+  nrow(Text_with_dating) +
+  nrow(Text_with_comments) +
+  nrow(Text_with_references)
+
+precleaning
+precleaning/(nrow(EDCS)/100)
+```
+
+
+# Building cleaning functions for specific datasets
 
 When we have established the individual building blocks, we can put them together in the right sequence and build a cleaning function in R for conservative and interpretive models.
 

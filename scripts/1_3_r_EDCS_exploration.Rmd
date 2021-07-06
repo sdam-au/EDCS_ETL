@@ -99,6 +99,15 @@ greek/(nrow(EDCS)/100)
 ```{r}
 unique(EDCS$language)
 ```
+```{r}
+table(EDCS$language)
+```
+### How much inscriptions are in Latin
+```{r}
+latin<- sum(is.na(EDCS$language))
+latin
+latin/(nrow(EDCS)/100)
+```
 
 
 ## Province
@@ -123,6 +132,45 @@ provinces %>%
 provinces %>%
   count(combined, sort=TRUE)
 ```
+```{r}
+location %>% 
+  filter(province == "Sicilia" & !is.na(start_yr) & !is.na(Latitude)) -> sicilia
+```
+
+```{r}
+sicilia %>% 
+  filter(!is.na(clean_text_interpretive_word))
+```
+
+
+```{r, eval=FALSE}
+map_sicilia <- leaflet(width="100%") %>%
+ addProviderTiles("Stamen.TerrainBackground")%>% # Add CartoDB map tiles
+# addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
+# addProviderTiles("Esri.WorldImagery", group = "ESRI Aerial") %>%
+# addPolylines(data = roads, color = "purple", weight = 2, opacity = 0.7) %>%
+  setView( lng = 22.326743, lat = 46.897122, zoom = 4 ) %>%
+  #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>%
+  addCircles(lng = sicilia$Longitude, lat = sicilia$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>%
+  addCircles(lng = sicilia$Longitude,  
+             lat = sicilia$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
+             popup = paste0("<b> InscriptionID: </b>", sicilia$ID
+                             # "<br><b> Province: </b>", sicilia$province,
+                             #<br><b> Type of inscription: </b>", lat_long_milestone$type_of_inscription_clean,
+                             # "<br><b> Type of monument: </b>", lat_long_milestone$type_of_monument_clean,
+                             # "<br><b> Not before (date): </b>", lat_long_milestone$not_before,
+                             # "<br><b> Not after (date): </b>", lat_long_milestone$not_after,
+                             #   "<br><b> Commentary: </b>", lat_long_milestone$commentary,
+                            )
+             ) %>%
+addLegend(position = "topright",
+  colors = c("Purple"),
+  labels = c("Inscription"), opacity = 1,
+  title = "Inscriptions in the EDCS database with known coordinates"
+)
+map_sicilia
+```
+
 
 ## Place
 ```{r}
@@ -145,6 +193,7 @@ plc1_df %>%
 ```{r}
 place<- unnest_longer(EDCS, col=place_list, simplify = T)
 ```
+
 ```{r}
 place %>% 
   count(place_list, sort=T)
@@ -155,13 +204,16 @@ place %>%
 # How many inscriptions are linked to EDH
 
 ```{r}
-length(str_subset(EDCS$Links, "heidelberg"))
+heidelberg_data<- length(str_subset(EDCS$Links, "heidelberg"))
+heidelberg_data
+
+heidelberg_data/(nrow(EDCS)/100)
 ```
 
 # How many inscriptions are linked to PHI
 
 ```{r}
-length(str_subset(EDCS$Links, "packhum"))
+length(str_subset(EDCS$Links, "P\\d{1,6}"))
 ```
 
 # Status attribute
@@ -173,6 +225,8 @@ inscr_type<- unlist(EDCS$inscr_type)
 inscr_type_df <- as.data.frame(inscr_type) %>% count(inscr_type, sort = T)
 inscr_type_df
 ```
+
+
 
 ### Type of inscribing process
 ```{r}
@@ -300,21 +354,26 @@ has_end_yr<- has_end_yr %>%
   mutate(date_interval = (start_yr - end_yr_1) * -1)
 
 table(has_end_yr$date_interval)
+summary(has_end_yr$date_interval)
 
 date_int<- has_end_yr %>% 
   count(date_interval, sort=T) %>% 
-  filter(date_interval > 0 & date_interval < 1000) %>% 
+  #filter(date_interval > 0 & date_interval < 1000) %>% 
   mutate(freq = n/(nrow(has_end_yr)/100))
   
 date_int %>% 
   ggplot(aes(x=date_interval,)) + 
   geom_histogram(fill="blue", color="blue", alpha=0.5, size=0.2) +
   labs(x = "Length of dating interval", y = "%", title ="Length of dating intervals in years in EDCS dataset") +
-  #geom_vline(aes(xintercept=100))+
+  geom_vline(aes(xintercept=100))+
   coord_cartesian(xlim = c(0, 1000), ylim=c(0,100))
 
-  
 ```
+
+```{r}
+table(date_int)
+```
+
 
 
 ```{r}
@@ -328,11 +387,12 @@ summary(EDCS$end_yr_1)
 plot(table(EDCS$end_yr_1))
 ```
 
-Both dates
+### Both dates
 ```{r}
 EDCS %>% 
   filter(!is.na(start_yr) & !is.na(end_yr_1)) -> has_both_dates
 
+has_both_dates
 nrow(has_both_dates)/(nrow(EDCS)/100)
 ```
 
@@ -346,6 +406,7 @@ EDCS %>%
 
 # Comments
 
+First 20 Comments to see the nature of the contents:
 ```{r}
 unique(EDCS$Comment)[1:20]
 ```
@@ -382,7 +443,50 @@ sum(na.omit(str_count(EDCS$clean_text_interpretive_word, '\\w+')))
 
 
 
+## EDCS without EDH
+
+```{r}
+EDCScon <- jsonlite::fromJSON("../data/EDCScon_dated.json")
+EDCScon<- as_tibble(EDCScon)
+```
+
+```{r}
+EDCSconjson <- jsonlite::toJSON(EDCScon, auto_unbox = TRUE)
+EDCScon_json<- jsonlite::fromJSON(EDCSconjson)
+EDCScon<- as_tibble(EDCScon_json)
+head(EDCScon,2)
+```
+
+```{r}
+library(stringr)
+
+length(str_subset(EDCS$Links, "trismegistos"))
+```
+
+```{r}
+length(str_subset(EDCS$Links, "edr"))
+```
+```{r}
+length(str_subset(EDCS$Links, "edh"))
+```
 
 
+  
+```{r}
+table(EDCS$Links)
+```
+  
 
+```{r}
+EDCS %>% 
+  dplyr::filter(is.na(EDCS$Links) & !is.na(EDCS$Latitude))
+
+EDCS %>% 
+  dplyr::filter(is.na(EDCS$Latitude))
+```
+
+
+```{r}
+filter(EDCS$Links = "list()")
+```
 
