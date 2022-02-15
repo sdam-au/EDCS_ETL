@@ -14,41 +14,23 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
 
 library(tidyverse)
 library(jsonlite)
-library(data.table)
 library(leaflet)
-library(sdam)
 ```
 
 ## Loading data
 Load the dataset, if you have Sciencedata.dk credentials
 
-```{r, echo=FALSE}
-mycred_secret<- readLines("~/mysecret.txt")
-```
-
-```{r, loading data}
-resp = request("EDCS_text_cleaned_2021-03-01.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
-```
-
-```{r, echo=FALSE}
-remove(mycred_secret)
-```
-
-OR of you don't have Sciencedata credentials:
-```{r, loading data public, eval=FALSE}
-#The folder still needs to made public by owner (Vojtech Kase) https://sciencedata.dk/shared/1f5f56d09903fe259c0906add8b3a55e
-resp2 = request("EDCS_text_cleaned_2021-03-01.json", path="/shared/1f5f56d09903fe259c0906add8b3a55e", method="GET")
-```
-
-Make a list and tibble from the downloaded dataset
 ```{r}
-list_json <- jsonlite::fromJSON(resp)
-EDCS = as_tibble(list_json)
+EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_text_cleaned_2022-02-15.json")
 ```
+
+```{r}
+EDCS <- jsonlite::fromJSON("../output/EDCS_text_cleaned_2022-02-15.json")
+```
+
 
 # Dataset exploration
 ```{r}

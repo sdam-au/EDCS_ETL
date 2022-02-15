@@ -18,40 +18,137 @@ opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(jsonlite)
-library(data.table)
-library(sdam)
 ```
 
 ## Loading data
 Load the dataset, if you have Sciencedata.dk credentials
 
-```{r, echo=FALSE}
-mycred_secret<- readLines("~/mysecret.txt")
-```
 
-```{r, loading data}
-resp = request("EDCS_text_lemmatized_proiel_2021-01-22.json", path="/sharingin/648597@au.dk/SDAM_root/SDAM_data/EDCS/public", method="GET", cred=mycred_secret)
-```
-
-```{r, echo=FALSE}
-remove(mycred_secret)
-```
-
-OR of you don't have Sciencedata credentials:
-```{r, loading data public, eval=FALSE}
-#The folder still needs to made public by owner (Vojtech Kase)
-# resp = request("EDCS_text_lemmatized_proiel_2021-01-22.json", path="/shared/1f5f56d09903fe259c0906add8b3a55e", method="GET")
-```
 
 Make a list and tibble from the downloaded dataset
 ```{r}
-list_json <- jsonlite::fromJSON("output/EDCS_text_lemmatized_perseus_2021-01-22.json")
-EDCS_proiel = as_tibble(list_json)
+EDCS <- jsonlite::fromJSON("../output/EDCS_text_cleaned_2022-02-15.json")
 ```
+
+# Text of inscription
+
+## How many inscriptions contain a text of an inscription
+
 ```{r}
-EDCS <- list_json <- jsonlite::fromJSON("output/EDCS_text_cleaned_2021-01-20.json")
+length(na.omit(EDCS$clean_text_interpretive_word))
+```
+In percent:
+```{r}
+length(na.omit(EDCS$clean_text_interpretive_word))/(nrow(EDCS)/100)
+```
+
+## How many words there are:
+
+Original text before cleaning:
+```{r}
+sum(lengths(gregexpr("\\w+", EDCS$inscription)) + 1)
+
+#different counting method
+sum(na.omit(str_count(EDCS$inscription, '\\w+')))
+```
+
+Text after cleaning:
+```{r}
+sum(lengths(gregexpr("\\w+", EDCS$clean_text_interpretive_word)) + 1)
+
+#different counting method
+sum(na.omit(str_count(EDCS$clean_text_interpretive_word, '\\w+')))
+```
+
+Conservative text
+```{r}
+sum(lengths(gregexpr("\\w+", EDCS$clean_text_conservative)) + 1)
+
+#different counting method
+sum(na.omit(str_count(EDCS$clean_text_conservative, '\\w+')))
+```
 
 
+## The most common words
+
+```{r}
+library(dplyr)
+library(tidytext)
+```
+### Original uncleaned dataset
+
+
+```{r}
+orig_words <- EDCS %>% 
+  unnest_tokens(output = word, input = inscription) 
+
+orig_wordcounts <- orig_words %>% count(word, sort = TRUE)
+
+head(orig_wordcounts, 20)
+```
+
+
+### Conservative dataset
+
+```{r}
+cons_words <- EDCS %>% 
+  unnest_tokens(output = word, input = clean_text_conservative) 
+
+cons_wordcounts <- cons_words %>% count(word, sort = TRUE)
+
+head(cons_wordcounts, 20)
+```
+
+### Interpretive dataset
+
+```{r}
+int_words <- EDCS %>% 
+  unnest_tokens(output = word, input = clean_text_interpretive_word) 
+
+int_wordcounts <- int_words %>% count(word, sort = TRUE)
+
+head(int_wordcounts, 10)
+```
+
+### Random inscriptions
+
+```{r}
+EDCS_inscrtype<- EDCS %>% 
+  filter(EDCS$inscr_type != "list()")
+
+  
+random100 <- sample_n(EDCS_inscrtype, 100)
+
+EDCS_inscrtype_export <- EDCS_inscrtype %>%
+  select(`EDCS-ID`, publication, province, province_list , place, place_list, Links, language, `dating from`, `dating to`, start_yr, end_yr_list, end_yr_1, notes_dating, status, status_list, inscr_type, status_notation, inscr_process, Latitude, Longitude, photo, Material, Comment, notes_references, notes_comments, inscription, inscription_stripped_final, clean_text_interpretive_word, clean_text_conservative, notes_dating, notes_references, notes_comments)
+
+
+write_csv(x=EDCS_inscrtype_export, path="output/EDCS_random100_inscrtype.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### How many inscriptions contain Greek language
+
+```{r}
 greek<- EDCS %>% filter(language == grep(x = EDCS$language, "GR", value = TRUE))
 ```
 
