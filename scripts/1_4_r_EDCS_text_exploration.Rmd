@@ -14,7 +14,7 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
+#opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(jsonlite)
@@ -29,6 +29,7 @@ Make a list and tibble from the downloaded dataset
 ```{r}
 EDCS <- jsonlite::fromJSON("../output/EDCS_text_cleaned_2022-02-15.json")
 ```
+
 
 # Text of inscription
 
@@ -116,17 +117,22 @@ head(int_wordcounts, 10)
 EDCS_inscrtype<- EDCS %>% 
   filter(EDCS$inscr_type != "list()")
 
-  
-random100 <- sample_n(EDCS_inscrtype, 100)
-
 EDCS_inscrtype_export <- EDCS_inscrtype %>%
-  select(`EDCS-ID`, publication, province, province_list , place, place_list, Links, language, `dating from`, `dating to`, start_yr, end_yr_list, end_yr_1, notes_dating, status, status_list, inscr_type, status_notation, inscr_process, Latitude, Longitude, photo, Material, Comment, notes_references, notes_comments, inscription, inscription_stripped_final, clean_text_interpretive_word, clean_text_conservative, notes_dating, notes_references, notes_comments)
+  select(`EDCS-ID`, Material, inscription, clean_text_interpretive_word, clean_text_conservative)
 
+random100 <- sample_n(EDCS_inscrtype_export, 100)
 
-write_csv(x=EDCS_inscrtype_export, path="output/EDCS_random100_inscrtype.csv")
+write_csv(x=random100, path="../output/EDCS_random100_inscrtype.csv")
 ```
 
 
+### Extracting labels for inscription types
+```{r}
+EDCS_types<- as.data.frame(unique(unlist(EDCS$inscr_type))) 
+
+write_csv(x=EDCS_types, path="../output/EDCS_types_inscr.csv", col_names = FALSE)
+
+```
 
 
 

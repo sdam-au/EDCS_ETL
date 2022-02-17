@@ -393,35 +393,6 @@ First 20 Comments to see the nature of the contents:
 unique(EDCS$Comment)[1:20]
 ```
 
-# Text of inscription
-
-## How many inscriptions contain a text of an inscription
-
-```{r}
-length(na.omit(EDCS$clean_text_interpretive_word))
-```
-In percent:
-```{r}
-length(na.omit(EDCS$clean_text_interpretive_word))/(nrow(EDCS)/100)
-```
-
-## How many words there are:
-
-Original text before cleaning:
-```{r}
-sum(lengths(gregexpr("\\w+", EDCS$inscription)) + 1)
-
-#different counting method
-sum(na.omit(str_count(EDCS$inscription, '\\w+')))
-```
-
-Text after cleaning:
-```{r}
-sum(lengths(gregexpr("\\w+", EDCS$clean_text_interpretive_word)) + 1)
-
-#different counting method
-sum(na.omit(str_count(EDCS$clean_text_interpretive_word, '\\w+')))
-```
 
 
 
