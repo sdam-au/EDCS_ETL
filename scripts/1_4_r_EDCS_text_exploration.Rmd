@@ -111,40 +111,42 @@ int_wordcounts <- int_words %>% count(word, sort = TRUE)
 head(int_wordcounts, 10)
 ```
 
-### Random inscriptions
+### Tagging 100 random inscriptions 
+
+With material:
 
 ```{r}
 EDCS_inscrtype<- EDCS %>% 
   filter(EDCS$inscr_type != "list()")
 
-EDCS_inscrtype_export <- EDCS_inscrtype %>%
+EDCS_inscrtype_export_material <- EDCS_inscrtype %>%
   select(`EDCS-ID`, Material, inscription, clean_text_interpretive_word, clean_text_conservative)
 
-random100 <- sample_n(EDCS_inscrtype_export, 100)
+random100 <- sample_n(EDCS_inscrtype_export_material, 100)
 
-write_csv(x=random100, path="../output/EDCS_random100_inscrtype.csv")
+write_csv(x=random100, path="../output/EDCS_random100_inscrtype_material.csv")
+```
+
+Without material: 
+
+```{r}
+
+EDCS_inscrtype_export_nomat <- EDCS_inscrtype %>%
+  select(`EDCS-ID`, inscription, clean_text_interpretive_word, clean_text_conservative)
+
+random100_2 <- sample_n(EDCS_inscrtype_export_nomat, 100)
+
+write_csv(x=random100_2, path="../output/EDCS_random100_inscrtype_nomaterial.csv")
 ```
 
 
-### Extracting labels for inscription types
+### Extracting unique labels for inscription types
 ```{r}
 EDCS_types<- as.data.frame(unique(unlist(EDCS$inscr_type))) 
 
 write_csv(x=EDCS_types, path="../output/EDCS_types_inscr.csv", col_names = FALSE)
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
