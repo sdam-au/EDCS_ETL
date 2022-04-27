@@ -1,5 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
+references:
+  - type: "software"
 authors: 
   - affiliation: "Aarhus University"
     family-names: "Heřmánková"
@@ -11,3 +13,11 @@ title: "EDCS ETL"
 version: 1.1
 doi: 10.5281/zenodo.6497148
 date-released: 2022-04-27
+abstract: "This repository contains scripts for accesing, extracting and transforming epigraphic datasets from the Epigraphic Database Clauss-Slaby (http://www.manfredclauss.de/) in a reproducible manner."
+keywords:
+  - "digital epigraphy"
+  - "Latin inscriptions"
+  - "digital history"
+  - "Roman history"
+  - "dataset"
+
