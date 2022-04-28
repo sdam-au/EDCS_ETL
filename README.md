@@ -39,13 +39,28 @@ To access the files created in previous steps of the ETL process, you can use th
 
 ### Data accessing scripts
 
+If you are trying to access the ETL scripts creted in 2020-2021 that created the version 1.0 of the dataset (`Heřmánková, Petra. (2021). EDCS_text_cleaned_2021_03_01 (Version 1.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.4888817`
+[https://zenodo.org/record/4888817](https://zenodo.org/record/4888817)), we refer you to the release 1.0 to 1.3. Because of the external dependencies and changes in third party software and the databases between 2020 and 2022, the ETL scripts has changed since then (release 1.3+).
+
 The data is accessed via a third party tool, [Lat Epig 2.0](https://github.com/mqAncientHistory/EpigraphyScraperNotebook), and saved as a series of CSV files by their respective Roman Province and saved in the folder `data`.
 
 We use R for accessing the data from a series of CSVs and combining them into one dataframe, exported as JSON file. Subsequently, we use series of R scripts for further cleaning and transformming the data. The scripts can be found in the folder ```scripts``` and they are named according to the sequence they should run in.
 
+SCRAPING THE DATA:
+1. Clone https://github.com/mqAncientHistory/Lat-Epig repository
+2. Change the branche to `scrapeprovinces`
+3. Make sure you have docker installed, if not follow the installation instructions for your OS https://docs.docker.com/engine/install/ and post-installation https://docs.docker.com/engine/install/linux-postinstall/ (Linux)
+4. Run in the terminal: bash dockerScraperAll.sh
+5. The scraper will run on its own (for several hours) and when it's done, the data will show in the data folder.
+
+Petra continue here.
+
+
+
+
 #### [1_0_LatEpig_2_0_search_by_provinces.bsh](https://github.com/sdam-au/EDCS_ETL/blob/master/scripts/1_0_LatEpig_2_0_search_by_provinces.bsh)
 
-_Accessing the files, using [Lat Epig 2.0 tool](https://github.com/mqAncientHistory/EpigraphyScraperNotebook)_ 
+_Accessing the files, using [Lat Epig 2.0 tool](https://github.com/mqAncientHistory/Lat-Epig)_ 
 
 Bash script to programmatically extract all non-empty inscriptions from individual provinces into separate CSV files. Run time ca. 16-20 hrs. The script is to be used within the local instantiation of the Lat Epig 2.0 tool. The CSV files will be saved within that repository to the folder `output`.
 
@@ -115,8 +130,8 @@ EDCS = as_tibble(list_json)
 
 ## How to cite us
 
-DATASET: `Heřmánková, Petra. (2021). EDCS_text_cleaned_2021_03_01 (Version 1.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.4888817`
+DATASET 2020: `Heřmánková, Petra. (2021). EDCS_text_cleaned_2021_03_01 (Version 1.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.4888817`
 [https://zenodo.org/record/4888817](https://zenodo.org/record/4888817)
 
-SCRIPTS: `Petra Heřmánková. (2022). sdam-au/EDCS_ETL: Scripts (v1.1). Zenodo. https://doi.org/10.5281/zenodo.6497148`
+SCRIPTS 2020: `Petra Heřmánková. (2022). sdam-au/EDCS_ETL: Scripts (v1.1). Zenodo. https://doi.org/10.5281/zenodo.6497148`
 [https://doi.org/10.5281/zenodo.6497148](https://doi.org/10.5281/zenodo.6497148)
