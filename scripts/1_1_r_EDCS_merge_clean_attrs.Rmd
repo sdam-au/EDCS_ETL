@@ -1,7 +1,8 @@
 ---
 title: "EDCS access and merging of TXT files"
-author: "Petra Hermankova"
-date: "27/11/2020"
+author:
+- Petra Hermankova^[Aarhus University, petra.hermankova@cas.au.dk, https://orcid.org/0000-0002-6349-0540]
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     theme: united
@@ -14,28 +15,28 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-opts_knit$set(root.dir = "/home/petra/Github/ClaussSlaby_ETL/")
+opts_knit$set(root.dir = "~/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(data.table)
-library(sdam)
+#library(sdam)
 library(jsonlite)
 ```
 
 # Merging the CSV files into one dataframe
 ```{r}
 # listing all tsv files
-temp <- list.files(path= "../data/2020_12_allProvinces/", pattern = "*.tsv")
+temp <- list.files(path= "../data/2022_04_allProvinces/", pattern = "*.tsv")
 ```
 
 ## Loading data from multiple TSV files
 
 ```{r}
-setwd("~/Github/EDCS_ETL/data/2020_12_allProvinces")
+setwd("~/Github/EDCS_ETL/data/2022_04_allProvinces")
 # loading multiples files
 EDCS <- temp %>% map_df(~read_tsv(., col_types = cols(.default = "c")))
 
-setwd("/home/petra/Github/ClaussSlaby_ETL/")
+setwd("~/Github/EDCS_ETL/")
 ```
 
 ```{r}
@@ -45,57 +46,36 @@ head(EDCS)
 ```{r}
 names(EDCS)
 ```
+# Description of attributes
+
+
+"EDCS-ID"         - unique identifier, as provided by the EDCS; http://db.edcs.eu/epigr/epikl_ergebnis.php
+"publication"     - bibliographical references, as provided by the EDCS (Publikation)                
+"province"        - name of the province where the inscription was found, as provided by the EDCS (Provinz)     
+"place"           - place name (ancient as well as modern) where the inscription was found, region name (separated by /), as provided by the EDCS (Ort)             
+"dating_from"     - the first listed start year of the dating interval of the inscription, YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
+"dating_to"       - the first listed end year of the dating interval of the inscription, YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)        
+"date_not_before"     - the earliest start of the dating interval of the inscription (*terminus post quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
+"date_not_after"      - the latest end date of the dating interval of the inscription (*terminus ante quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
+"status"          - status keywords defining the contents of the inscription, keywords of several categories are mixed into one, containing both inscription classification and information on status of people, or the execution and technique of inscription. Individual keywords separeted by semicolon, in Latin, as provided by the EDCS (Inschriftengattung / Personenstatus)   
+"inscription"     -   text of an inscription including the Leiden Marka up and special EDCS markup, as published by the EDCS. 
+"inscription_conservative_cleaning" - result of cleaning function embedded in the Lat/Epig software, producing a conservative version of the text of an inscription. The text is as close to the preserved state of the text, without restorations and expansions
+"inscription_interpretive_cleaning" - result of cleaning function embedded in the Lat/Epig software, producing an interpretative version of the text of an inscription. The text contains all restorations and expansions in order to obtain as rich version of the text as possible, interpunction between sentences is not preserved  
+"material"          - material of an inscriptions, as provided by the EDCS               
+"comment"           - written Commentary, as provided by the EDCS            
+"latitude"          - geographic coordinate, Latitude, as provided by the EDCS
+"longitude"         - geographic coordinate, Longitude, as provided by the EDCS          
+"language"          - language of an inscription other than Latin, abbreviation for languages other than Latin, e.g. "GR" for Greek, extracted from the inscription attribute. Latin is default value (empty means Latin), as provided by the EDCS         
+"photo"             - hyperlink to the multimedia database of the EDCS            
+"partner_link"      - hyperlinks to the records for the same inscription in partner projects, as provided by the EDCS           
+"extra_text"        - additional text available on the HTML page that does not belong to any of the other categories, as provided by the EDCS               
+"extra_html"        - additional hyperlinks, as provided by the EDCS           
+"raw_dating"        - raw dates without any formatting, as provided by the EDCS
 
 # Cleaning attributes
 
 Some of the attributes need to be streamlined as they contain either lists of values rathen than individual observations, but they have a form of a text string. They need to be converted to a list so they can be analysed computationally.
 
-## Cleaning place attribute
-
-Transforming string character into list for better manipulation.
-```{r}
-EDCS$place_list<- str_split(EDCS$place, " / ")
-```
-
-How many unique place names there is?
-```{r}
-length(unique(unlist(EDCS$place_list)))
-```
-
-## Cleaning 'dating from' attribute
-
-1. Transforming string containing multiple values into a list.
-2. Transforming character into numeric value.
-```{r}
-table(EDCS$`dating from`)
-EDCS$start_yr <- as.numeric(EDCS$`dating from`)
-summary(EDCS$start_yr)
-```
-
-## Cleaning 'dating to' attribute
-
-1. Transforming string containing multiple values into a list.
-2. Transforming character into numeric value.
-
-```{r}
-str_subset(EDCS$`dating to`, ";")
-```
-
-```{r}
-
-EDCS$end_yr_list<- str_split(EDCS$`dating to`, ";\\s*")
-```
-
-#### Converting the first value of the list to numeric value
-```{r}
-EDCS$end_yr_1<- as.numeric(map(EDCS_end_yr_list, 1))
-```
-
-## Cleaning 'status' attribute
-
-```{r}
-EDCS$status_list<- str_split(EDCS$status, "; ")
-```
 
 ### Categorisation based on the typology of keyword in the attribute status:
 
@@ -127,22 +107,15 @@ EDCS$status_notation <- lapply(EDCS$status_notation, function(x) if(identical(x,
 EDCS$inscr_process <- lapply(EDCS$inscr_process, function(x) if(identical(x, character(0))) NA_character_ else x)
 ```
 
-## Cleaning 'province' attribute
+## Newly created attributes
 
-Some records contain multiple values provinces, separated by |, such as: 
+"inscr_type" - status keywords grouped as unsorted list; created from status, in Latin, created by SDAM and presented as a list
+"status_notation" - inscription type as extracted from status keywords, in Latin, created by SDAM and presented as a list
+"inscr_process" - personal status keyword as extracted from status keywords, in Latin, created by SDAM and presented as a list
+execution or writing technique of an inscription as extracted from status keywords, in Latin, created by SDAM and presented as a list
+"province_list" - name of provinces of finer spatial resolution that fall under the more general Provinz attribute in EDCS, created by SDAM and presented as a list
 
-`Belgica | Germania inferior`
-`Pannonia inferior | Pannonia superior`
-`Moesia inferior | Moesia superior`
 
-```{r}
-EDCS$province_list <- str_split(EDCS$province, " \\| ")
-```
-
-Listing all the provinces and their variants:
-```{r}
-unique(EDCS$province_list)
-```
 # Saving to Science Data
 
 ```{r, echo=FALSE}
@@ -151,8 +124,8 @@ mycred_secret<- readLines("~/mysecret.txt")
 
 ```{r}
 EDCS_json <- jsonlite::toJSON(EDCS, auto_unbox=TRUE)
-write(EDCS_json, file="EDCS_merged_cleaned_attrs_2021-03-01.json")
-request("EDCS_merged_cleaned_attrs_2021-03-01.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+write(EDCS_json, file="data/EDCS_merged_cleaned_attrs_2022-04-28.json")
+request("EDCS_merged_cleaned_attrs_2022-04-28.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
 ```
 
