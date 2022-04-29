@@ -1,7 +1,8 @@
 ---
-title: "EDCS cleaning of the epigraphic text"
-author: "Petra Hermankova"
-date: "10/12/2020"
+title: "Cleaning of the text of an inscription in EDCS dataset"
+author:
+- Petra Hermankova^[Aarhus University, petra.hermankova@cas.au.dk, https://orcid.org/0000-0002-6349-0540]
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     theme: united
@@ -14,11 +15,11 @@ output:
 
 ```{r setup, include=FALSE, echo=FALSE}
 require("knitr")
-#opts_knit$set(root.dir = "/home/petra/Github/EDCS_ETL/")
+#opts_knit$set(root.dir = "~/Github/EDCS_ETL/")
 
 library(tidyverse)
 library(jsonlite)
-library(leaflet)
+#library(leaflet)
 ```
 
 ## Loading data
@@ -26,7 +27,7 @@ Load the dataset, if you have Sciencedata.dk credentials
 
 Make a list and tibble from the downloaded dataset
 ```{r}
-EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_merged_cleaned_attrs_2021-03-01.json")
+EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_merged_cleaned_attrs_2022-04-28.json")
 ```
 
 # Cleaning epigraphic text for tidy text mining analysis (word and sentence centered)
@@ -113,7 +114,7 @@ substitution_conservative <- c("\\<[^<]*\\>", "")
 
 ### 1.6. Substitution in EDH dataset
 
-**Aim:** All  sustitutions following the pattern "A=B" will be cleaned thw following way: B remain in the text and the equal sign and A will be eliminated from the clean text.
+**Aim:** All  substitutions following the pattern "A=B" will be cleaned the following way: B remain in the text and the equal sign and A will be eliminated from the clean text.
 
 **!!!** Beware that by eliminating the brackets you may loose some information about the preservation of the text - use at your own discretion. The `substitution_edh_interpretive` should be run before `substitution_interpretive` block, otherwise the Regex pattern would not clean the text properly. The `substitution_interpretive` block will clean the angular brackets in the next step.
 
@@ -121,12 +122,12 @@ substitution_conservative <- c("\\<[^<]*\\>", "")
 * Example after cleaning: ```pos<I>erunt bene merenti```
 
 ```{r}
-substitution_edh_conservative <- c("([α-ωΑ-Ωa-zA-Z])=([α-ωΑ-Ωa-zA-Z])", "\\2")
+substitution_edh_conservative <- c("(\\<)([α-ωΑ-Ωa-zA-Z])=([α-ωΑ-Ωa-zA-Z])(\\>)", "\\3")
 ```
 
 ## 2. Cleaning blocks for the interpretive model
 
-*The aim of this model is to produce a clean text that is enriched with interpretations of the original text as published by the editor of the corpus. The editorial interpretations include abbreviations, restorations, substitutions and suppresions of the text.*
+*The aim of this model is to produce a clean text that is enriched with interpretations of the original text as published by the editor of the corpus. The editorial interpretations include abbreviations, restorations, substitutions and suppressions of the text.*
 
 The output of the interpretive model will produce an epigraphic text with as many editorial suggestions, restorations, corrections, and improvements as possible to provide as much possible contents of the inscription as possible. The brackets and non-utf compliant symbols will be eliminated from the `interpretive model`.
 
@@ -143,7 +144,7 @@ expanded_abbreviations_interpretive <- c("[\\(*\\)]", "")
 
 ### 2.2. Suppresion of a text with superscripts
 
-**Aim:** Contents found within curly braces {} followed by one or more superscript digits will substitute the word immediately preceding the curly braces with the word contained in the curly braces and the braces will be eliminated, see example. Note: The cleaning block will not work if there is no text preceeding the curly braces (the pattern will be skipped).
+**Aim:** Contents found within curly braces {} followed by one or more superscript digits will substitute the word immediately preceding the curly braces with the word contained in the curly braces and the braces will be eliminated, see example. Note: The cleaning block will not work if there is no text preceding the curly braces (the pattern will be skipped).
 
 **!!!** This particular pattern is common for the PHI dataset and may  or may not appear in other datasets. It is recommended to run the ```suppresion_keep_interpretive``` or ```suppresion_remove_interpretive``` block after ```suppresion_superscripts_interpretive``` block, otherwise the Regex pattern would not clean the text properly.
 
@@ -158,7 +159,7 @@ suppresion_superscripts_interpretive <- c(" [^ ]+ \\{([⁰¹²³⁴⁵⁶⁷⁸�
 
 **Aim:** All curly braces {} will be eliminated from the clean text (substituted with ""), while the contents of the braces will remain in the text.
 
-**!!!** It is crutial that block ```suppresion_keep_interpretive``` or ```suppresion_remove_interpretive``` does not precede block `suppresion_superscripts_interpretive`, otherwise the Regex pattern would not clean the text properly. Due to ambiguous use of {} by editors of epigraphic corpora, the exact usage depends on the specific dataset and the way the curly braces were used. Therefore, two options how to handle curly braces are provided: If you wish to keep the text within the curly braces and remove the braces, use ```suppresion_keep_interpretive``` block. If you wish to remove the text in the braces and the braces, use ```suppresion_remove_interpretive``` block.
+**!!!** It is crucial that block ```suppresion_keep_interpretive``` or ```suppresion_remove_interpretive``` does not precede block `suppresion_superscripts_interpretive`, otherwise the Regex pattern would not clean the text properly. Due to ambiguous use of {} by editors of epigraphic corpora, the exact usage depends on the specific dataset and the way the curly braces were used. Therefore, two options how to handle curly braces are provided: If you wish to keep the text within the curly braces and remove the braces, use ```suppresion_keep_interpretive``` block. If you wish to remove the text in the braces and the braces, use ```suppresion_remove_interpretive``` block.
 
 * Example before cleaning: ```θ̣εοῦ Σεβαστοῦ υἱοῦ {θ̣εοῦ Σεβαστοῦ} τύχης  ```
 * Example after cleaning (keep text): ```θ̣εοῦ Σεβαστοῦ υἱοῦ θ̣εοῦ Σεβαστοῦ τύχης```
@@ -235,7 +236,7 @@ substitution_edh_interpretive_missing <- c("([α-ωΑ-Ωa-zA-Z])*=([α-ωΑ-Ωa-
 * Example after cleaning: ```Dion<>si ```
 
 ```{r}
-substitution_edh_conservative_missing <- c("([α-ωΑ-Ωa-zA-Z])*=([α-ωΑ-Ωa-zA-Z])", "\\1")
+substitution_edh_conservative_missing <- c("(\\<)([α-ωΑ-Ωa-zA-Z])*=([α-ωΑ-Ωa-zA-Z])(\\>)", "\\2")
 ```
 
 
@@ -299,13 +300,13 @@ editorial_notes <-c("\\(vel sim.\\)", " ")
 
 ### 3.5. New line
 
-**Aim:** All instances of in-line symbol for new line (|) will be eliminated (substituted with "").
+**Aim:** All instances of in-text symbol for new line (| or /) will be eliminated (substituted with "").
 
 * Example before cleaning: ```Λάμπρη// Τ̣ελεσήνορ|ος γυνή```
 * Example after cleaning: ```Λάμπρη Τ̣ελεσήνορος γυνή```
 
 ```{r}
-new_line <- c("[\\||\\/|\\/\\/]", "")
+new_line <- c("[\\||\\/|\\/\\/]", " ")
 ```
 
 ### 3.6. Split word over two lines
@@ -434,7 +435,7 @@ extra_blank <- c("[ ]+", " ")
 
 ### 3.16. Multi-whitespace
 
-**Aim:** All instances of more then one whitespace "  " next to each other will be eliminated (substituted with "").
+**Aim:** All instances of more then one whitespace "  " next to each other will be substituted with one space (substituted with " ").
 
 **!!!** The ```multi_whitespace``` should run as the second last cleaning block to ensure all redundant white spaces are cleaned from the text.
 
@@ -533,8 +534,19 @@ edcs_number_three_right <- c("3\\]", "-]")
 edcs_number_three_left <- c("\\[3", "[-")
 ```
 
+### 4.4 Blank within line represented by number 3 in square closed brackets preceded and followed by strings 
 
-### 4.4 Blank line represented by number 6 in square brackets []
+**Aim:** All instances of number three in closed square brackets will eliminated with "" while the text and the brackets around will be preserved.
+
+* Example before cleaning: ```"mo[numentum 3 vi]/olaverit"``` 
+* Example after cleaning: ```mo[numentum vi]olaverit```
+
+```{r}
+edcs_number_three_middle <- c("(\\[\\w+)( [3] )(\\w+\\])", "\\1 \\3")
+```
+
+
+### 4.5 Blank line represented by number 6 in square brackets []
 
 **Aim:** All instances of number six in left square brackets will substituted with "[-".
 
@@ -546,7 +558,7 @@ edcs_number_six_both <- c("\\[6\\]", "[-]")
 ```
 
 
-### 4.5 Blank space represented by number 1
+### 4.6 Blank space represented by number 1
 
 **Aim:** All instances of number one will substituted with " ".
 
@@ -557,7 +569,7 @@ edcs_number_six_both <- c("\\[6\\]", "[-]")
 edcs_number_one <- c("[1]", " ")
 ```
 
-### 4.6 Quotes
+### 4.7 Quotes
 
 **Aim:** All instances of quotes one will substituted with " ".
 
@@ -568,7 +580,7 @@ edcs_number_one <- c("[1]", " ")
 edcs_quotes <- c("\u{0022}", " ")
 ```
 
-### 4.7 Backslashes
+### 4.8 Backslashes
 
 **Aim:** All instances of backslashes one will substituted with "".
 
@@ -582,7 +594,7 @@ edcs_backslashes <- c("\u{005C}\u{005C}", " ")
 ```
 
 
-### 4.8 Latin Enclitics
+### 4.9 Latin Enclitics
 
 **Aim:** All instances of Latin eclitics -que will be separated from the word by space.
 
@@ -593,7 +605,7 @@ edcs_backslashes <- c("\u{005C}\u{005C}", " ")
 edcs_que <- c("(\\w+)(que)\\b", "\\1 \\2")
 ```
 
-### 4.9 Roman numerals + vir
+### 4.10 Roman numerals + vir
 
 **Aim:** All instances of Roman numerals preceeding word 'vir' will be separated from the word by space.
 
@@ -603,129 +615,6 @@ edcs_que <- c("(\\w+)(que)\\b", "\\1 \\2")
 ```{r}
 edcs_vir <- c("([I|V|X])(vir*)", "\\1 \\2")
 ```
-
-
-
-## EDCS specific cleaning
-
-### Removing redundant onformation from `inscription`
-
-1) Attribute `inscription` contains over 1000 of notes to dating of the inscription that needs to be matched with Regexes, extracted to separate attribute `dating_notes` and then remove from the text of an inscription and saved as a new attribute `inscription_stripped`.
-
-*Example of strings to be removed*
-
-`to 276;   b:  276 to 282" \n\n \n \n`
-`to 367;   b:  ;   c:  367 to 375;   d:  387 to 388" \n\n \n \n`
-
-2) Attribute `inscription` contains references to DOI that are extracted to separate attribute `other_notes` and removed from the text of an inscription and saved as a new attribute `inscription_stripped2`
-
-*Example of strings to be removed*
-
-` \n\n10.3406/mefr.1975.1032`
-
-3) Attribute `inscription` contains modern notes that are not part of the ancient inscription and need to be cleaned out.
-
-*Example of strings to be removed*
-
-`According the proposed supplements of the inscription the date is 162 or 163 like EDCS-28500161 from the year 162/3 or EDCS-29100030 from the year 162.`
-
-
-
-```{r, stripping the text of an inscription}
-EDCS_clean <- EDCS %>%
-   mutate(dating_notes = str_extract(EDCS$inscription, "^[to|b:].*\\n\\n")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped = str_replace(EDCS$inscription, "^[to|b:].*\\n\\n([^.*])", "\\1")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(dating_notes2 = str_extract(EDCS_clean$inscription_stripped, "^to\\s{1,2}\\d{1,4}.*")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped2 = str_replace(EDCS_clean$inscription_stripped, "^to\\s{1,2}\\d{1,4}.*", "")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes = str_extract(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped3 = str_replace(EDCS_clean$inscription_stripped2, "\\n.*10\\.\\d{1,6}.+$","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes2 = str_extract(EDCS_clean$inscription_stripped3, "\\s*http.*"))
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped4 = str_replace(EDCS_clean$inscription_stripped3, "\\s*http.*","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes3 = str_extract(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*")) %>%
-   mutate(inscription_stripped5 = str_replace(EDCS_clean$inscription_stripped4, "\\ncomment\\n.*","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes4 = str_extract(EDCS_clean$inscription_stripped5, "\\n\\n(?!lauce|la s\\(olvit\\)).*")) %>%
-   mutate(inscription_stripped6 = str_replace(EDCS_clean$inscription_stripped5, "\\n\\n(?!lauce|la s\\(olvit\\)).*","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes5 = str_extract(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]")) %>%
-   mutate(inscription_stripped7 = str_replace(EDCS_clean$inscription_stripped6, "\\[Manfred.*|\\[Werner.*\\]","")) 
-
-EDCS_clean <- EDCS_clean  %>% 
-   mutate(inscription_stripped8 = str_replace(EDCS_clean$inscription_stripped7, "^ \\n \\n","")) # eliminating empty lines with spaces at the beginning
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped9 = str_replace(EDCS_clean$inscription_stripped8, "\\n$","")) # eliminating empty lines at the end
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped10 = str_replace(EDCS_clean$inscription_stripped9, "^ \\n\\n","")) # eliminating empty lines at the beginning
-
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes6 = str_extract(EDCS_clean$inscription_stripped10, "\\n.*")) %>%
-   mutate(inscription_stripped11 = str_replace_all(EDCS_clean$inscription_stripped10, "\\n.*","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes7 = str_extract(EDCS_clean$inscription_stripped11, "\\bThe .*")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped12 = str_replace(EDCS_clean$inscription_stripped11, "\\bThe .*","")) 
-EDCS_clean <- EDCS_clean %>%
-   mutate(other_notes8 = str_extract(EDCS_clean$inscription_stripped12, ".* the .*")) 
-
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped13 = str_replace(EDCS_clean$inscription_stripped12, ".* the .*","")) 
-
-EDCS_clean <- EDCS_clean %>%
-   mutate(inscription_stripped_final = str_replace(EDCS_clean$inscription_stripped13, "\\r+",""))
-
-```
-
-#### How many inscriptions were pre-cleaned: 
-
-```{r}
-Text_with_dating <- EDCS_clean %>% 
-  dplyr::filter(notes_dating != " " )
-Text_with_dating
-
-Text_with_comments <- EDCS_clean %>% 
-  filter(notes_comments != "     ")
-Text_with_comments
-
-Text_with_references <- EDCS_clean %>% 
-  filter(notes_references != " " )
-Text_with_references
-```
-
-```{r}
-edcs_debug_date <- Text_with_dating %>% 
-  select(`EDCS-ID`, inscription, Comment, `dating from`, `dating to`)
-
-edcs_debug_comments <- Text_with_comments %>% 
-  select(`EDCS-ID`, inscription, Comment)
-
-edcs_debug_biblio <- Text_with_references %>% 
-  select(`EDCS-ID`, inscription, Comment)
-
-write_csv(edcs_debug_date, "../output/EDCS_debug_date.csv")
-write_csv(edcs_debug_comments, "../output/EDCS_debug_comments.csv")
-write_csv(edcs_debug_biblio, "../output/EDCS_debug_biblio.csv")
-```
-
-
-
-```{r}
-precleaning <-  
-  nrow(Text_with_dating) +
-  nrow(Text_with_comments) +
-  nrow(Text_with_references)
-
-precleaning
-precleaning/(nrow(EDCS)/100)
-```
-
 
 # Building cleaning functions for specific datasets
 
@@ -742,6 +631,7 @@ cleaning_conservative_edcs <- function(epigraphic_dataset){
   clean_text <- gsub(pattern=edcs_number_three_both[1], replacement=edcs_number_three_both[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=edcs_number_three_right[1], replacement=edcs_number_three_right[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=edcs_number_three_left[1], replacement=edcs_number_three_left[2], x=clean_text, perl=TRUE)
+  clean_text <- gsub(pattern=edcs_number_three_middle[1], replacement=edcs_number_three_middle[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=edcs_number_six_both[1], replacement=edcs_number_six_both[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=edcs_number_one[1], replacement=edcs_number_one[2], x=clean_text, perl=TRUE)
   clean_text <- gsub(pattern=edcs_quotes[1], replacement=edcs_quotes[2], x=clean_text, perl=TRUE)
@@ -766,7 +656,6 @@ cleaning_conservative_edcs <- function(epigraphic_dataset){
   return(clean_text)
 }
 ```
-
 
 
 
@@ -806,46 +695,77 @@ cleaning_interpretive_edcs <- function(epigraphic_dataset){
 }
 ```
 
-
-### Enriching the full dataset with conservative and interpretive cleaned versions of the text:
+## Cleaning of 2022 version of the data
 ```{r}
-EDCS_clean <- EDCS_clean %>%
-   mutate(clean_text_conservative = cleaning_conservative_edcs(EDCS_clean$inscription_stripped_final)) %>% 
-   mutate(clean_text_interpretive_word = cleaning_interpretive_edcs(EDCS_clean$inscription_stripped_final))
+EDCS_clean <- EDCS %>%
+   mutate(clean_text_conservative = cleaning_conservative_edcs(EDCS$inscription)) %>% 
+   mutate(clean_text_interpretive_word = cleaning_interpretive_edcs(EDCS$inscription))
   
 ```
 
-
-### Combining notes extracted from the text of the inscription by their category:
+### Compare the results of the two cleanings (Lat-Epig/Manual)
 ```{r}
-EDCS_clean <- EDCS_clean %>%
-  mutate(notes_dating = paste(EDCS_clean$dating_notes, EDCS_clean$dating_notes2))%>%
-  mutate(notes_dating = str_replace_all(notes_dating, "NA", "")) %>%
-  mutate(notes_references = paste(EDCS_clean$other_notes, EDCS_clean$other_notes2))%>%
-  mutate(notes_references = str_replace_all(notes_references, "NA", "")) %>%
-  mutate(notes_comments = paste(EDCS_clean$other_notes3, EDCS_clean$other_notes4, EDCS_clean$other_notes5, EDCS_clean$other_notes6, EDCS_clean$other_notes7, EDCS_clean$other_notes8)) %>%
-  mutate(notes_comments = str_replace_all(notes_comments, "NA", ""))
-```
+# manually entering random inscriptions and checking the output
+number <- c(34444)
+EDCS_clean$inscription[number]
+EDCS_clean$inscription_conservative_cleaning[number]
+EDCS_clean$clean_text_conservative[number]
 
-```{r}
-names(EDCS_clean)
+EDCS_clean$inscription_interpretive_cleaning[number]
+EDCS_clean$clean_text_interpretive_word[number]
+
 ```
 
 
-### Selecting the columns relevant for further analysis (for export)
+
 ```{r}
-EDCS_export <- EDCS_clean %>%
-  select(`EDCS-ID`, publication, province, province_list , place, place_list, Links, language, `dating from`, `dating to`, start_yr, end_yr_list, end_yr_1, notes_dating, status, status_list, inscr_type, status_notation, inscr_process, Latitude, Longitude, photo, Material, Comment, notes_references, notes_comments, inscription, inscription_stripped_final, clean_text_interpretive_word, clean_text_conservative, notes_dating, notes_references, notes_comments)
+# missing space in the SDAM cleaning, needs to be fixed, issue somewhere before new line block
+EDCS_clean %>% 
+         filter(clean_text_conservative == "Σεουήρου ἑκατοντλευτῆς αὕτη Συθερος ἔζησεν ἔτη ξγʹ")
+
+test<- EDCS_clean %>% 
+  filter(`EDCS-ID`== "EDCS-79400081")
 ```
+
+Before> "Σεουήρου ἑκατοντλευτῆς αὕτη Συθερος ἔζησεν ἔτη ξγʹ"
+Should be Σεουήρου ἑκατοντλευτῆς αὕτη Συ θερος ἔζησεν ἔτη ξγʹ
+
+
+
+
+
+
+
+### Comparing the different output of the the two cleanings (Lat-Epig/Manual) for Conservative text
+```{r}
+EDCS_clean %>% 
+  filter(inscription_conservative_cleaning != clean_text_conservative) %>% 
+  select(inscription, inscription_conservative_cleaning, clean_text_conservative)
+```
+
+
+### Comparing the different output of the the two cleanings (Lat-Epig/Manual) for Interpretive text
+```{r}
+EDCS_clean %>% 
+  filter(inscription_interpretive_cleaning != clean_text_interpretive_word) %>% 
+  select(inscription, inscription_interpretive_cleaning, clean_text_interpretive_word)
+```
+
+
+
+
+
+
+
 
 
 
 # Saving to Sciencedata
 ```{r}
-EDCS_cleaned_json <- jsonlite::toJSON(EDCS_export, auto_unbox = TRUE)
+EDCS_cleaned_json <- jsonlite::toJSON(EDCS_clean, auto_unbox = TRUE)
 
 #mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_cleaned_json, file="../output/EDCS_text_cleaned_2022-02-15.json")
+write(EDCS_cleaned_json, file="../output/EDCS_text_cleaned_2022-04-29.json")
 #request("output/EDCS_text_cleaned_2021-03-01.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         #method="PUT", cred=c(mycred_secret[1], mycred_secret[2])) # does not work any more, has to be uploaded manually to sciencedata.dk
 ```
