@@ -23,11 +23,11 @@ library(jsonlite)
 ```
 
 ## Loading data
-Load the dataset, if you have Sciencedata.dk credentials
+Load the dataset from Sciencedata.dk , you don't need any credentials, the JSON file lives in a public folder.
 
 Make a list and tibble from the downloaded dataset
 ```{r}
-EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_merged_cleaned_attrs_2022-04-28.json")
+EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_merged_cleaned_attrs_2022-09-12.json")
 ```
 
 # Cleaning epigraphic text for tidy text mining analysis (word and sentence centered)
@@ -52,8 +52,10 @@ Each of the cleaning blocks maintains the same structure, using Regular expressi
 ## 1. Cleaning blocks for the conservative model
 *The aim of this model is to produce a clean text that is as close to the original text of an inscription as possible, without any editorial input.*
 The cleaned output of the conservative model will be as close to the original text of an inscription as possible. In most cases it should resemble a _diplomatic edition_ of epigraphic text with spaces between words, lowercase letters, eliminated brackets and non-utf compliant symbols. The interpretive restoration, substitutions or any changes of the text as appear in the dataset, done by the editor of the epigraphic corpus, are eliminated from the conservative model.
+
 ### 1.1. Expanded abbreviations
-**Aim:** All expanded abbreaviations that are in the parenthesis () will be eliminated from the clean text (substituted with "").
+
+**Aim:** All expanded abbreviations that are in the parenthesis () will be eliminated from the clean text (substituted with "").
 * Example before cleaning: ```Αὐρ(ήλιος) Οὐαλέριος```
 * Example after cleaning: ```Αὐρ Οὐαλέριος```
 ```{r}
@@ -96,7 +98,7 @@ suppresion_conservative <- c("[\\{*\\}]", "")
 * Example after cleaning: ```ανα Ἕλληνο θυγάτηρ καὶ ἡ ἑτέρα```
 
 ```{r}
-restoration_conservative <- c("\\[[^[]*\\]", "")
+restoration_conservative <- c("\\[[^[]*\\]", " ")
 ```
 
 ### 1.5. Substitution
@@ -306,7 +308,7 @@ editorial_notes <-c("\\(vel sim.\\)", " ")
 * Example after cleaning: ```Λάμπρη Τ̣ελεσήνορος γυνή```
 
 ```{r}
-new_line <- c("[\\||\\/|\\/\\/]", " ")
+new_line <- c("[\\||\\/|\\/\\/]", "")
 ```
 
 ### 3.6. Split word over two lines
@@ -706,7 +708,7 @@ EDCS_clean <- EDCS %>%
 ### Compare the results of the two cleanings (Lat-Epig/Manual)
 ```{r}
 # manually entering random inscriptions and checking the output
-number <- c(34444)
+number <- c(482528)
 EDCS_clean$inscription[number]
 EDCS_clean$inscription_conservative_cleaning[number]
 EDCS_clean$clean_text_conservative[number]
@@ -740,9 +742,11 @@ Should be Σεουήρου ἑκατοντλευτῆς αὕτη Συ θερο
 ```{r}
 EDCS_clean %>% 
   filter(inscription_conservative_cleaning != clean_text_conservative) %>% 
-  select(inscription, inscription_conservative_cleaning, clean_text_conservative)
+  select(`EDCS-ID`, inscription, inscription_conservative_cleaning, clean_text_conservative)
 ```
-
+RAW: [3]ν τὸν λαμ/[πρότατον ὑπατικ]όν Ἄππιος Κυ/[3 τὸν ἑαυτοῦ πά]τρωνα
+DESIRED: ν τὸν λαμ όν Ἄππιος Κυ τρωνα
+CURRENT: ν τὸν λαμόν Ἄππιος Κυτρωνα
 
 ### Comparing the different output of the the two cleanings (Lat-Epig/Manual) for Interpretive text
 ```{r}
@@ -753,20 +757,14 @@ EDCS_clean %>%
 
 
 
-
-
-
-
-
-
-
 # Saving to Sciencedata
 ```{r}
 EDCS_cleaned_json <- jsonlite::toJSON(EDCS_clean, auto_unbox = TRUE)
 
 #mycred_secret<- readLines("~/mysecret.txt")
-write(EDCS_cleaned_json, file="../output/EDCS_text_cleaned_2022-04-29.json")
-#request("output/EDCS_text_cleaned_2021-03-01.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+
+write(EDCS_cleaned_json, file="../data/EDCS_text_cleaned_2022-09-12.json")
+#request("output/EDCS_text_cleaned_2022-09-12.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
         #method="PUT", cred=c(mycred_secret[1], mycred_secret[2])) # does not work any more, has to be uploaded manually to sciencedata.dk
 ```
 

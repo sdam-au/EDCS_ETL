@@ -1,7 +1,8 @@
 ---
 title: "EDCS cleaning of the epigraphic text"
-author: "Petra Hermankova"
-date: "10/12/2020"
+author:
+- Petra Hermankova^[Aarhus University, petra.hermankova@cas.au.dk, https://orcid.org/0000-0002-6349-0540]
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     theme: united
@@ -21,14 +22,16 @@ library(leaflet)
 ```
 
 ## Loading data
-Load the dataset, if you have Sciencedata.dk credentials
 
+Load the dataset from Sciencedata.dk
 ```{r}
 EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_text_cleaned_2022-02-15.json")
 ```
 
+Or load local dataset
 ```{r}
-EDCS <- jsonlite::fromJSON("../output/EDCS_text_cleaned_2022-02-15.json")
+getwd()
+EDCS <- jsonlite::fromJSON("../data/EDCS_text_cleaned_2022-09-12.json")
 ```
 
 
@@ -114,14 +117,20 @@ provinces %>%
 provinces %>%
   count(combined, sort=TRUE)
 ```
+
+### Example with inscriptions from Sicilia
 ```{r}
-location %>% 
-  filter(province == "Sicilia" & !is.na(start_yr) & !is.na(Latitude)) -> sicilia
+EDCS %>% 
+  filter(province == "Sicilia" & !is.na(date_not_before) & !is.na(latitude)) -> sicilia
 ```
 
 ```{r}
 sicilia %>% 
   filter(!is.na(clean_text_interpretive_word))
+```
+```{r}
+sicilia$latitude <- as.numeric(sicilia$latitude)
+sicilia$longitude <- as.numeric(sicilia$longitude)
 ```
 
 
@@ -131,11 +140,11 @@ map_sicilia <- leaflet(width="100%") %>%
 # addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
 # addProviderTiles("Esri.WorldImagery", group = "ESRI Aerial") %>%
 # addPolylines(data = roads, color = "purple", weight = 2, opacity = 0.7) %>%
-  setView( lng = 22.326743, lat = 46.897122, zoom = 4 ) %>%
+  setView( lng = 14.326743, lat = 37.897122, zoom = 6 ) %>%
   #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>%
-  addCircles(lng = sicilia$Longitude, lat = sicilia$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>%
-  addCircles(lng = sicilia$Longitude,  
-             lat = sicilia$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
+  addCircles(lng = sicilia$longitude, lat = sicilia$latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>%
+  addCircles(lng = sicilia$longitude,  
+             lat = sicilia$latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
              popup = paste0("<b> InscriptionID: </b>", sicilia$ID
                              # "<br><b> Province: </b>", sicilia$province,
                              #<br><b> Type of inscription: </b>", lat_long_milestone$type_of_inscription_clean,
@@ -157,36 +166,21 @@ map_sicilia
 ## Place
 ```{r}
 # unique place names
-length(unique(unlist(EDCS$place_list)))
+length(unique(unlist(EDCS$place)))
 ```
-
+First 10 place names
 ```{r}
-#first element of the place list
-plc_1<- map(EDCS$place_list,1)
-
-plc1_df <- plc_1 %>% 
-  unlist() 
-
-plc1_df <- as.data.frame(plc1_df)
-plc1_df %>% 
-  count(plc1_df, sort=T)
+head(table(unlist(EDCS$place)), 10)
 ```
-
-```{r}
-place<- unnest_longer(EDCS, col=place_list, simplify = T)
-```
-
-```{r}
-place %>% 
-  count(place_list, sort=T)
-```
-
-
 
 # How many inscriptions are linked to EDH
 
 ```{r}
-heidelberg_data<- length(str_subset(EDCS$Links, "heidelberg"))
+View(EDCS_clean)
+```
+
+```{r}
+heidelberg_data<- length(str_subset(EDCS$partner_link, "heidelberg"))
 heidelberg_data
 
 heidelberg_data/(nrow(EDCS)/100)
@@ -195,7 +189,7 @@ heidelberg_data/(nrow(EDCS)/100)
 # How many inscriptions are linked to PHI
 
 ```{r}
-length(str_subset(EDCS$Links, "P\\d{1,6}"))
+length(str_subset(EDCS$partner_link, "P\\d{1,6}"))
 ```
 
 # Status attribute
@@ -230,7 +224,7 @@ status_notation_df
 ### Which inscriptions have geospatial coordinates?
 ```{r}
 EDCS %>%
-  dplyr::filter(!is.na(Latitude)) -> location
+  dplyr::filter(!is.na(latitude)) -> location
 # how many inscriptions have latitude
 nrow(location)
 # how many % of inscriptions have latitude
@@ -238,8 +232,8 @@ nrow(location)/(nrow(EDCS)/100)
 ```
 
 ```{r}
-location$Latitude <- as.numeric(location$Latitude)
-location$Longitude <- as.numeric(location$Longitude)
+location$Latitude <- as.numeric(location$latitude)
+location$Longitude <- as.numeric(location$longitude)
 ```
 
 ```{r}
@@ -256,8 +250,8 @@ decimalplaces<-function(x) {
 }
 
 ### latitude
-lat_df<- as.data.frame(EDCS$Latitude) %>%  
-  mutate(decimals = unlist(map(EDCS$Latitude, decimalplaces)))
+lat_df<- as.data.frame(EDCS$latitude) %>%  
+  mutate(decimals = unlist(map(EDCS$latitude, decimalplaces)))
 
 lat_df_count<- lat_df %>% 
   count(decimals, sort = T) %>% 
@@ -266,8 +260,8 @@ lat_df_count<- lat_df %>%
 lat_df_count
 
 ### longitude
-long_df<- as.data.frame(EDCS$Longitude) %>%  
-  mutate(decimals = unlist(map(EDCS$Longitude, decimalplaces)))
+long_df<- as.data.frame(EDCS$longitude) %>%  
+  mutate(decimals = unlist(map(EDCS$longitude, decimalplaces)))
 
 long_df_count<- long_df %>% 
   count(decimals, sort = T) %>% 
@@ -279,6 +273,9 @@ long_df_count
 
 ### Mapped inscriptions with known coordinates - for full dataset be careful before running
 ```{r, eval=FALSE}
+location$longitude <-as.numeric(location$longitude)
+location$latitude <-as.numeric(location$latitude)
+
 map_all <- leaflet(width="100%") %>%
  addProviderTiles("Stamen.TerrainBackground")%>% # Add CartoDB map tiles
 # addProviderTiles("Stamen.Watercolor")%>% # Add CartoDB map tiles
@@ -287,8 +284,8 @@ map_all <- leaflet(width="100%") %>%
   setView( lng = 22.326743, lat = 46.897122, zoom = 4 ) %>%
   #setMaxBounds(lat1=43.633977, lng1 =-11.227926 , lat2=35.133882 , lng2=50.882336) %>%
 #  addCircles(lng = location$Longitude, lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "grey" , fillColor = "white",) %>%
-  addCircles(lng = location$Longitude,  
-             lat = location$Latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
+  addCircles(lng = location$longitude,  
+             lat = location$latitude, opacity = 0.5, radius = 10, fill = TRUE, color = "purple" , fillColor = "",
              popup = paste0("<b> InscriptionID: </b>", location$ID
                              # "<br><b> Province: </b>", location$province,
                              #<br><b> Type of inscription: </b>", lat_long_milestone$type_of_inscription_clean,
@@ -303,7 +300,7 @@ addLegend(position = "topright",
   labels = c("Inscription (n = 486,699)"), opacity = 1,
   title = "Inscriptions in the EDCS database with known coordinates"
 )
-# map_all
+# map_all   #uncomment if you want to show the map, it requires a powerful computer for the entire dataset
 ```
 
 
@@ -313,7 +310,7 @@ addLegend(position = "topright",
 ## Start year
 ```{r}
 EDCS %>%
-  filter(!is.na(EDCS$start_yr)) -> has_start_yr
+  filter(!is.na(EDCS$date_not_before)) -> has_start_yr
 # how many inscriptions have start year
 nrow(has_start_yr)
 # how many inscriptions have start year in %
@@ -323,7 +320,7 @@ nrow(has_start_yr)/(nrow(EDCS)/100)
 ## End year
 ```{r}
 EDCS %>%
-  filter(!is.na(EDCS$end_yr_1)) -> has_end_yr
+  filter(!is.na(EDCS$date_not_after)) -> has_end_yr
 # how many inscriptions have end year
 nrow(has_end_yr)
 # how many inscriptions have end year in %
@@ -332,8 +329,13 @@ nrow(has_end_yr)/(nrow(EDCS)/100)
 
 ### Date Range
 ```{r}
+has_end_yr$date_not_before <- as.numeric(has_end_yr$date_not_before)
+has_end_yr$date_not_after <- as.numeric(has_end_yr$date_not_after)
+
+
+
 has_end_yr<- has_end_yr %>% 
-  mutate(date_interval = (start_yr - end_yr_1) * -1)
+  mutate(date_interval = (date_not_before - date_not_after) * -1)
 
 table(has_end_yr$date_interval)
 summary(has_end_yr$date_interval)
@@ -359,23 +361,24 @@ table(date_int)
 
 
 ```{r}
-summary(EDCS$start_yr)
+EDCS$date_not_before <- as.numeric(EDCS$date_not_before)
 
-plot(table(EDCS$start_yr))
+summary(EDCS$date_not_before)
+
+EDCS$date_not_after <- as.numeric(EDCS$date_not_after)
+
+summary(EDCS$date_not_after)
 ```
-
-```{r}
-summary(EDCS$end_yr_1)
-plot(table(EDCS$end_yr_1))
-```
-
 ### Both dates
 ```{r}
-EDCS %>% 
-  filter(!is.na(start_yr) & !is.na(end_yr_1)) -> has_both_dates
+dated <- EDCS %>% 
+  filter(!is.na(date_not_before) | !is.na(date_not_after))
 
-has_both_dates
-nrow(has_both_dates)/(nrow(EDCS)/100)
+dated
+```
+
+```{r}
+nrow(dated)/(nrow(EDCS)/100)
 ```
 
 
@@ -383,63 +386,12 @@ nrow(has_both_dates)/(nrow(EDCS)/100)
 
 ```{r}
 EDCS %>%
-  count(Material, sort= TRUE)
+  count(material, sort= TRUE)
 ```
 
 # Comments
 
 First 20 Comments to see the nature of the contents:
 ```{r}
-unique(EDCS$Comment)[1:20]
+unique(EDCS$comment)[1:20]
 ```
-
-
-
-
-## EDCS without EDH
-
-```{r}
-EDCScon <- jsonlite::fromJSON("../data/EDCScon_dated.json")
-EDCScon<- as_tibble(EDCScon)
-```
-
-```{r}
-EDCSconjson <- jsonlite::toJSON(EDCScon, auto_unbox = TRUE)
-EDCScon_json<- jsonlite::fromJSON(EDCSconjson)
-EDCScon<- as_tibble(EDCScon_json)
-head(EDCScon,2)
-```
-
-```{r}
-library(stringr)
-
-length(str_subset(EDCS$Links, "trismegistos"))
-```
-
-```{r}
-length(str_subset(EDCS$Links, "edr"))
-```
-```{r}
-length(str_subset(EDCS$Links, "edh"))
-```
-
-
-  
-```{r}
-table(EDCS$Links)
-```
-  
-
-```{r}
-EDCS %>% 
-  dplyr::filter(is.na(EDCS$Links) & !is.na(EDCS$Latitude))
-
-EDCS %>% 
-  dplyr::filter(is.na(EDCS$Latitude))
-```
-
-
-```{r}
-filter(EDCS$Links = "list()")
-```
-

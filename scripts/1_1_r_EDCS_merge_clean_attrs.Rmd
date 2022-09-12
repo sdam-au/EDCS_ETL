@@ -1,5 +1,5 @@
 ---
-title: "EDCS access and merging of TXT files"
+title: "EDCS access and merging of TSV files"
 author:
 - Petra Hermankova^[Aarhus University, petra.hermankova@cas.au.dk, https://orcid.org/0000-0002-6349-0540]
 date: "`r format(Sys.time(), '%d %B, %Y')`"
@@ -23,16 +23,16 @@ library(data.table)
 library(jsonlite)
 ```
 
-# Merging the CSV files into one dataframe
+# Merging the TSV files into one dataframe
 ```{r}
 # listing all tsv files
-temp <- list.files(path= "../data/2022_04_allProvinces/", pattern = "*.tsv")
+temp <- list.files(path= "./data/2022_09_allProvinces/", pattern = "*.tsv")
 ```
 
 ## Loading data from multiple TSV files
 
 ```{r}
-setwd("~/Github/EDCS_ETL/data/2022_04_allProvinces")
+setwd("~/Github/EDCS_ETL/data/2022_09_allProvinces")
 # loading multiples files
 EDCS <- temp %>% map_df(~read_tsv(., col_types = cols(.default = "c")))
 
@@ -45,6 +45,7 @@ head(EDCS)
 
 ```{r}
 names(EDCS)
+class(EDCS$inscription_conservative_cleaning)
 ```
 # Description of attributes
 
@@ -55,29 +56,29 @@ names(EDCS)
 "place"           - place name (ancient as well as modern) where the inscription was found, region name (separated by /), as provided by the EDCS (Ort)             
 "dating_from"     - the first listed start year of the dating interval of the inscription, YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
 "dating_to"       - the first listed end year of the dating interval of the inscription, YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)        
-"date_not_before"     - the earliest start of the dating interval of the inscription (*terminus post quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
-"date_not_after"      - the latest end date of the dating interval of the inscription (*terminus ante quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung)
-"status"          - status keywords defining the contents of the inscription, keywords of several categories are mixed into one, containing both inscription classification and information on status of people, or the execution and technique of inscription. Individual keywords separeted by semicolon, in Latin, as provided by the EDCS (Inschriftengattung / Personenstatus)   
-"inscription"     -   text of an inscription including the Leiden Marka up and special EDCS markup, as published by the EDCS. 
-"inscription_conservative_cleaning" - result of cleaning function embedded in the Lat/Epig software, producing a conservative version of the text of an inscription. The text is as close to the preserved state of the text, without restorations and expansions
+"date_not_before"     - the earliest start of the dating interval of the inscription (*terminus post quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung). If multiple dates for terminus post quem were provided by EDCS, the attribute contains the widest possible range.
+"date_not_after"      - the latest end date of the dating interval of the inscription (*terminus ante quem*), YYYY representing year, where minus values are years BC, and plus values are years AD, as provided by the EDCS (Datierung). If multiple dates for terminus ante quem were provided by EDCS, the attribute contains the widest possible range.
+"status"          - status keywords defining the contents of the inscription, keywords of several categories are mixed into one, containing both inscription classification and information on status of people, or the execution and technique of inscription. Individual keywords separated by semicolon, in Latin, as provided by the EDCS (Inschriftengattung / Personenstatus)   
+"inscription"     -   text of an inscription including the Leiden Mark up and special EDCS markup, as published by the EDCS. 
+"inscription_conservative_cleaning" - result of cleaning function embedded in the Lat/Epig software, producing a conservative version of the text of an inscription. The text is as close to the preserved state of the text, without restorations and expansions also known as diplomatic edition (only the characters as they appear on the support, with minimal or no editorial intervention or interpretation).
 "inscription_interpretive_cleaning" - result of cleaning function embedded in the Lat/Epig software, producing an interpretative version of the text of an inscription. The text contains all restorations and expansions in order to obtain as rich version of the text as possible, interpunction between sentences is not preserved  
-"material"          - material of an inscriptions, as provided by the EDCS               
+"material"          - material of an inscriptions, as provided by the EDCS in Latin             
 "comment"           - written Commentary, as provided by the EDCS            
 "latitude"          - geographic coordinate, Latitude, as provided by the EDCS
 "longitude"         - geographic coordinate, Longitude, as provided by the EDCS          
 "language"          - language of an inscription other than Latin, abbreviation for languages other than Latin, e.g. "GR" for Greek, extracted from the inscription attribute. Latin is default value (empty means Latin), as provided by the EDCS         
 "photo"             - hyperlink to the multimedia database of the EDCS            
 "partner_link"      - hyperlinks to the records for the same inscription in partner projects, as provided by the EDCS           
-"extra_text"        - additional text available on the HTML page that does not belong to any of the other categories, as provided by the EDCS               
-"extra_html"        - additional hyperlinks, as provided by the EDCS           
+"extra_text"        - any additional text that was not parsed into any other attribute, as provided by the EDCS              
+"extra_html"        - any additional HTML tags that were not parsed into any other attribute, as provided by the EDCS          
 "raw_dating"        - raw dates without any formatting, as provided by the EDCS
 
 # Cleaning attributes
 
-Some of the attributes need to be streamlined as they contain either lists of values rathen than individual observations, but they have a form of a text string. They need to be converted to a list so they can be analysed computationally.
+Some of the attributes need to be streamlined as they contain either lists of values rather than individual observations, but they have a form of a text string. They need to be converted to a list so they can be analysed computationally.
 
 
-### Categorisation based on the typology of keyword in the attribute status:
+### Categorisation based on the typology of keyword in the attribute `status`:
 
 ```{r}
 inscription_type_list <- c("tituli sepulcrales", "tituli fabricationis", "inscriptiones christianae", "tituli sacri", "tituli possessionis", "tituli operum", "miliaria", "tituli honorarii", "carmina", "signacula", "diplomata militaria", "leges", "defixiones", "termini", "reges", "signacula medicorum", "senatus consulta")
@@ -113,20 +114,18 @@ EDCS$inscr_process <- lapply(EDCS$inscr_process, function(x) if(identical(x, cha
 "status_notation" - inscription type as extracted from status keywords, in Latin, created by SDAM and presented as a list
 "inscr_process" - personal status keyword as extracted from status keywords, in Latin, created by SDAM and presented as a list
 execution or writing technique of an inscription as extracted from status keywords, in Latin, created by SDAM and presented as a list
-"province_list" - name of provinces of finer spatial resolution that fall under the more general Provinz attribute in EDCS, created by SDAM and presented as a list
-
 
 # Saving to Science Data
 
 ```{r, echo=FALSE}
-mycred_secret<- readLines("~/mysecret.txt")
+mycred_secret<- readLines("~/mysecret.txt") #only if you have access to sciencedata, otherwise skip and create file locally
 ```
 
 ```{r}
 EDCS_json <- jsonlite::toJSON(EDCS, auto_unbox=TRUE)
-write(EDCS_json, file="data/EDCS_merged_cleaned_attrs_2022-04-28.json")
-request("EDCS_merged_cleaned_attrs_2022-04-28.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
-        method="PUT", cred=c(mycred_secret[1], mycred_secret[2]))
+write(EDCS_json, file="data/EDCS_merged_cleaned_attrs_2022-09-12.json")
+request("EDCS_merged_cleaned_attrs_2022-09-12.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+        method="PUT", cred=c(mycred_secret[1], mycred_secret[2])) #only if you have access to sciencedata, otherwise skip and create file locally
 ```
 
 ```{r, echo=FALSE}

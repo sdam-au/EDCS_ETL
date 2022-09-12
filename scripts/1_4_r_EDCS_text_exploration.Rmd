@@ -1,7 +1,8 @@
 ---
-title: "Text mining of lemmatized corpus"
-author: "Petra Hermankova"
-date: "26/01/2021"
+title: "Text exploration of the EDCS corpus"
+author:
+- Petra Hermankova^[Aarhus University, petra.hermankova@cas.au.dk, https://orcid.org/0000-0002-6349-0540]
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     theme: united
@@ -21,15 +22,23 @@ library(jsonlite)
 ```
 
 ## Loading data
-Load the dataset, if you have Sciencedata.dk credentials
 
-
-
-Make a list and tibble from the downloaded dataset
+Load the dataset from Sciencedata.dk
 ```{r}
-EDCS <- jsonlite::fromJSON("../output/EDCS_text_cleaned_2022-02-15.json")
+EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_text_cleaned_2022-02-15.json")
 ```
 
+Or load local dataset
+```{r}
+getwd()
+EDCS <- jsonlite::fromJSON("../data/EDCS_text_cleaned_2022-09-12.json")
+```
+
+
+# Dataset exploration
+```{r}
+names(EDCS)
+```
 
 # Text of inscription
 
@@ -120,11 +129,11 @@ EDCS_inscrtype<- EDCS %>%
   filter(EDCS$inscr_type != "list()")
 
 EDCS_inscrtype_export_material <- EDCS_inscrtype %>%
-  select(`EDCS-ID`, Material, inscription, clean_text_interpretive_word, clean_text_conservative)
+  select(`EDCS-ID`, material, inscription, clean_text_interpretive_word, clean_text_conservative)
 
 random100 <- sample_n(EDCS_inscrtype_export_material, 100)
 
-write_csv(x=random100, path="../output/EDCS_random100_inscrtype_material.csv")
+write_csv(x=random100, file="../output/EDCS_random100_inscrtype_material.csv")
 ```
 
 Without material: 
@@ -136,7 +145,7 @@ EDCS_inscrtype_export_nomat <- EDCS_inscrtype %>%
 
 random100_2 <- sample_n(EDCS_inscrtype_export_nomat, 100)
 
-write_csv(x=random100_2, path="../output/EDCS_random100_inscrtype_nomaterial.csv")
+write_csv(x=random100_2, file="../output/EDCS_random100_inscrtype_nomaterial.csv")
 ```
 
 
@@ -144,7 +153,7 @@ write_csv(x=random100_2, path="../output/EDCS_random100_inscrtype_nomaterial.csv
 ```{r}
 EDCS_types<- as.data.frame(unique(unlist(EDCS$inscr_type))) 
 
-write_csv(x=EDCS_types, path="../output/EDCS_types_inscr.csv", col_names = FALSE)
+write_csv(x=EDCS_types,file="../output/EDCS_types_inscr.csv", col_names = FALSE)
 
 ```
 
