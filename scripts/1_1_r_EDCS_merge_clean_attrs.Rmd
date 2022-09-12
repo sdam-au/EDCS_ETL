@@ -118,14 +118,14 @@ execution or writing technique of an inscription as extracted from status keywor
 # Saving to Science Data
 
 ```{r, echo=FALSE}
-mycred_secret<- readLines("~/mysecret.txt") #only if you have access to sciencedata, otherwise skip and create file locally
+#mycred_secret<- readLines("~/mysecret.txt") #only if you have access to sciencedata, otherwise skip and create file locally
 ```
 
 ```{r}
 EDCS_json <- jsonlite::toJSON(EDCS, auto_unbox=TRUE)
 write(EDCS_json, file="data/EDCS_merged_cleaned_attrs_2022-09-12.json")
-request("EDCS_merged_cleaned_attrs_2022-09-12.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
-        method="PUT", cred=c(mycred_secret[1], mycred_secret[2])) #only if you have access to sciencedata, otherwise skip and create file locally
+#request("EDCS_merged_cleaned_attrs_2022-09-12.json", path="/sharingout/648597@au.dk/SDAM_root/SDAM_data/EDCS/public",
+#        method="PUT", cred=c(mycred_secret[1], mycred_secret[2])) #only if you have access to sciencedata, otherwise skip and create file locally
 ```
 
 ```{r, echo=FALSE}

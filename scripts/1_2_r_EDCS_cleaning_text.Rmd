@@ -30,6 +30,12 @@ Make a list and tibble from the downloaded dataset
 EDCS <- jsonlite::fromJSON("https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/EDCS_merged_cleaned_attrs_2022-09-12.json")
 ```
 
+Or load local dataset
+```{r}
+getwd()
+EDCS <- jsonlite::fromJSON("../data/EDCS_merged_cleaned_attrs_2022-09-12.json")
+```
+
 # Cleaning epigraphic text for tidy text mining analysis (word and sentence centered)
 
 *Aim:* The main purpose of this script is to clean large collections of epigraphic texts all at once in order to create cleaned texts ready for text mining analysis. The output clean texts can be used for a) word centered text mining, also known as the tidytext approach (https://www.tidytextmining.com/) or for b) sentence centered text mining, as part of the Natural Language Processing (https://en.wikipedia.org/wiki/Natural_language_processing).
@@ -708,7 +714,7 @@ EDCS_clean <- EDCS %>%
 ### Compare the results of the two cleanings (Lat-Epig/Manual)
 ```{r}
 # manually entering random inscriptions and checking the output
-number <- c(482528)
+number <- c(383250)
 EDCS_clean$inscription[number]
 EDCS_clean$inscription_conservative_cleaning[number]
 EDCS_clean$clean_text_conservative[number]
@@ -718,44 +724,45 @@ EDCS_clean$clean_text_interpretive_word[number]
 
 ```
 
-
-
-```{r}
-# missing space in the SDAM cleaning, needs to be fixed, issue somewhere before new line block
-EDCS_clean %>% 
-         filter(clean_text_conservative == "Σεουήρου ἑκατοντλευτῆς αὕτη Συθερος ἔζησεν ἔτη ξγʹ")
-
-test<- EDCS_clean %>% 
-  filter(`EDCS-ID`== "EDCS-79400081")
-```
-
-Before> "Σεουήρου ἑκατοντλευτῆς αὕτη Συθερος ἔζησεν ἔτη ξγʹ"
-Should be Σεουήρου ἑκατοντλευτῆς αὕτη Συ θερος ἔζησεν ἔτη ξγʹ
-
-
-
-
-
-
-
-### Comparing the different output of the the two cleanings (Lat-Epig/Manual) for Conservative text
+### Comparing the different output of the the two cleanings (Lat-Epig/scripted in R) for Conservative text
 ```{r}
 EDCS_clean %>% 
   filter(inscription_conservative_cleaning != clean_text_conservative) %>% 
   select(`EDCS-ID`, inscription, inscription_conservative_cleaning, clean_text_conservative)
 ```
-RAW: [3]ν τὸν λαμ/[πρότατον ὑπατικ]όν Ἄππιος Κυ/[3 τὸν ἑαυτοῦ πά]τρωνα
-DESIRED: ν τὸν λαμ όν Ἄππιος Κυ τρωνα
-CURRENT: ν τὸν λαμόν Ἄππιος Κυτρωνα
 
-### Comparing the different output of the the two cleanings (Lat-Epig/Manual) for Interpretive text
+```{r}
+EDCS_clean %>% 
+  filter(inscription_conservative_cleaning != clean_text_conservative) %>% 
+  select(`EDCS-ID`, inscription, inscription_conservative_cleaning, clean_text_conservative) %>% 
+  nrow() -> conservative_cleaning_diff
+
+# what's conservative cleaning difference rate in the entire dataset in %
+conservative_cleaning_diff/(nrow(EDCS_clean)/100)
+```
+
+
+```{r}
+EDCS_clean %>% 
+  filter(`EDCS-ID`=="EDCS-29100274") %>% 
+  select(inscription, inscription_conservative_cleaning,clean_text_conservative) %>% 
+  unlist()
+```
+
+
+### Comparing the different output of the the two cleanings (Lat-Epig/scripted in R) for Interpretive text
 ```{r}
 EDCS_clean %>% 
   filter(inscription_interpretive_cleaning != clean_text_interpretive_word) %>% 
   select(inscription, inscription_interpretive_cleaning, clean_text_interpretive_word)
 ```
 
-
+```{r}
+EDCS_clean %>% 
+  filter(`EDCS-ID`=="EDCS-29100274") %>% 
+  select(inscription, inscription_interpretive_cleaning, clean_text_interpretive_word) %>% 
+  unlist()
+```
 
 # Saving to Sciencedata
 ```{r}
