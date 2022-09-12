@@ -1,8 +1,8 @@
-# ETL Workflow for the Quantitative Analysis of the EDCS dataset
+# ETL workflow for quantitative analysis of inscriptions from the EDCS dataset
 * ETL
 
 [![License: CC BY-NC-SA 4.0](https://licensebuttons.net/l/by-nc-sa/4.0/80x15.png "Creative Commons License CC BY-NC-SA 4.0")](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-![Project_status](https://img.shields.io/badge/status-in__progress-brightgreen "Project status logo")
+![Project_status](https://img.shields.io/badge/status-finalised-brightgreen "Project status logo")
 
 ---
 
@@ -18,10 +18,10 @@ This repository contains scripts for accesing, extracting and transforming epigr
 
 ### 2022 version 2
 
-DATASET 2022: `Heřmánková, Petra. (2022). EDCS_text_cleaned_2022_09_12 (v2.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.4888817`
+DATASET 2022: `Heřmánková, Petra. (2022). EDCS_text_cleaned_2022_09_12 (v2.0) [Data set]. Zenodo. http://doi.org/10.5281/zenodo.7072337`
 [https://zenodo.org/record/7072337](https://zenodo.org/record/7072337) 
 
-SCRIPTS 2022: `Petra Heřmánková. (2022). sdam-au/EDCS_ETL: Scripts (v2.0). Zenodo. https://doi.org/10.5281/zenodo.6497148`
+SCRIPTS 2022: `Petra Heřmánková. (2022). sdam-au/EDCS_ETL: Scripts (v2.0). Zenodo. https://doi.org/10.5281/zenodo.7072355`
 [https://doi.org/10.5281/zenodo.7072355](https://doi.org/10.5281/zenodo.7072355) 
 
 The 2022 datasets contains 537,286 cleaned and streamlined Latin inscriptions from the Epigraphic Database Clauss Slaby (EDCS, http://www.manfredclauss.de/), aggregated on 2022/09/12, created for the purpose of a quantitative study of epigraphic trends by the Social Dynamics in the Ancient Mediterranean Project (SDAM, http://sdam.au.dk). The dataset contains 27 attributes with original and streamlined data. Compared to the 2021 dataset, there are 36,750 more inscriptions and 2 less attributes containing redundant legacy data, thus the entire dataset is approximately the same size but some of the attributes are streamlined (465.5 MB in 2022 compared to 451.5 MB MB from 2021.): some of the attribute names have changed for better consistency, e.g. `Material` > `material`, `Latitude` > `latitude`; some attributes are no longer available due to the improvements of the LatEpig tool, e.g. `start_yr`, `notes_dating`, `inscription_stripped_final`; and some new attributes were added due to the improvements of the cleaning process, e.g. `clean_text_conservative`. For full overview, see the `Metadata` section.
