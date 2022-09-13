@@ -58,7 +58,7 @@ To access the files created in previous steps of the ETL process, you can use th
 ### The final (streamlined) dataset
 is produced by the scripts in this repository is called `EDCS_text_cleaned_[timestamp].json` and published on Zenodo in all its versions, for details and links see `How to cite us` section above. 
 
-Additionally, the identical dataset can be accsed via Sciencedata.dk: `SDAM_root/SDAM_data/EDCS/public` folder on sciencedata.dk or alternatively as `https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/`.
+Additionally, the identical dataset can be accessed via Sciencedata.dk: `SDAM_root/SDAM_data/EDCS/public` folder on sciencedata.dk or alternatively as `https://sciencedata.dk/public/1f5f56d09903fe259c0906add8b3a55e/`.
 
 
 ## Scripts
